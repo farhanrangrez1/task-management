@@ -1,46 +1,59 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BiSearch, BiEdit, BiTrash } from 'react-icons/bi';
 import Sidebar from './Sidebar';
 import { Link } from 'react-router-dom';
 import { BsBell } from 'react-icons/bs';
 import Header from './Header';
+import { useSelector, useDispatch } from 'react-redux';
+import { getProjects } from '../features/Project/ProjectSlice';
 
 function Projects() {
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: 'Website Redesign',
-      category: 'Frontend Development',
-      address: '123 Tech Street, Silicon Valley',
-      teamLead: {
-        name: 'Michael Chen',
-        avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-        clockedIn: true
-      },
-      teamSize: 8,
-      progress: 75,
-      deadline: '2024-03-22'
-    },
-    {
-      id: 2,
-      name: 'Website Redesign',
-      category: 'Frontend Development',
-      address: '456 Innovation Ave, Tech Park',
-      teamLead: {
-        name: 'Michael Chen',
-        avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-        clockedIn: false
-      },
-      teamSize: 8,
-      progress: 75,
-      deadline: '2024-03-22'
-    }
-  ]);
+  // const [projects, setProjects] = useState([
+  //   {
+  //     id: 1,
+  //     name: 'Website Redesign',
+  //     category: 'Frontend Development',
+  //     address: '123 Tech Street, Silicon Valley',
+  //     teamLead: {
+  //       name: 'Michael Chen',
+  //       avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+  //       clockedIn: true
+  //     },
+  //     teamSize: 8,
+  //     progress: 75,
+  //     deadline: '2024-03-22'
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Website Redesign',
+  //     category: 'Frontend Development',
+  //     address: '456 Innovation Ave, Tech Park',
+  //     teamLead: {
+  //       name: 'Michael Chen',
+  //       avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+  //       clockedIn: false
+  //     },
+  //     teamSize: 8,
+  //     progress: 75,
+  //     deadline: '2024-03-22'
+  //   }
+  // ]);
+
+   const dispatch = useDispatch();
+   const { projects  } = useSelector((state) => state?.projects );
+   console.log(projects);
+   useEffect(() => {
+    dispatch(getProjects());
+  }, [dispatch]);
+
+   console.log("PROJECTS LIN ",projects);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [teamFilter, setTeamFilter] = useState('All');
+
+
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -48,7 +61,7 @@ function Projects() {
   };
 
   const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = project.project_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
     const matchesTeam = teamFilter === 'All' || project.category === teamFilter;
     return matchesSearch && matchesStatus && matchesTeam;
@@ -116,68 +129,36 @@ function Projects() {
                   <th>Project Name</th>
                   <th>Team Lead</th>
                   <th>Team Size</th>
-                  <th>Project Address</th>
-                  <th>Clock In/Out</th>
+                  <th>Project Status</th>
+                  <th>Due Date</th>
                   <th>Deadline</th>
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {filteredProjects.map(project => (
-                  <tr key={project.id}>
-                    <td>
-                      <div className="project-info">
-                        <div className="project-name">{project.name}</div>
-                        <div className="project-category">{project.category}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="team-lead">
-                        <img src={project.teamLead.avatar} alt={project.teamLead.name} />
-                        <span>{project.teamLead.name}</span>
-                      </div>
-                    </td>
-                    <td>{project.teamSize}</td>
-                    <td>
-                      <div className="project-address">{project.address}</div>
-                    </td>
-                    <td>
-                      <label className="switch">
-                        <input 
-                          type="checkbox" 
-                          checked={project.teamLead.clockedIn}
-                          onChange={() => {
-                            const updatedProjects = projects.map(p => {
-                              if (p.id === project.id) {
-                                return {
-                                  ...p,
-                                  teamLead: {
-                                    ...p.teamLead,
-                                    clockedIn: !p.teamLead.clockedIn
-                                  }
-                                };
-                              }
-                              return p;
-                            });
-                            setProjects(updatedProjects);
-                          }}
-                        />
-                        <span className="slider round"></span>
-                      </label>
-                      <span className="clock-status">
-                        {project.teamLead.clockedIn ? 'Clocked In' : 'Clocked Out'}
-                      </span>
-                    </td>
-                    <td>{new Date(project.deadline).toLocaleDateString()}</td>
-                    <td>
-                      <div className="action-buttons">
-                        <button className="action-btn edit"><BiEdit /></button>
-                        <button className="action-btn delete"><BiTrash /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+              {filteredProjects.map(project => (
+    <tr key={project?.id}>
+      <td>
+        <div className="project-info">
+          <div className="project-name">{project?.project_name}</div>
+        </div>
+      </td>
+      <td>
+        <span>{project?.project_lead}</span>
+      </td>
+      <td>{project?.team_members ? project.team_members.split(',').length : 0}</td>
+      <td>
+        <div className="project-address">{project?.project_status}</div>
+      </td>
+      <td>{project?.start_date}</td>
+      <td>{project?.due_date}</td>
+      <td>
+        <div className="action-buttons">
+          <button className="action-btn edit"><BiEdit /></button>
+          <button className="action-btn delete"><BiTrash /></button>
+        </div>
+      </td>
+    </tr>
+  ))}
             </table>
           </div>
 
