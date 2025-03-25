@@ -6,6 +6,11 @@ import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
 import Sidebar from "./Sidebar";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchShifts } from "../features/shifts/shiftsSlice";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import FullCalendar from "@fullcalendar/react";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
@@ -15,16 +20,41 @@ import interactionPlugin from "@fullcalendar/interaction";
 import Header from "./Header";
 
 function New_Scheduling() {
+  const dispatch = useDispatch();
+  const shifts = useSelector((state) => state.shifts.shiftList);
   const [customShifts, setCustomShifts] = useState([]);
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
-  const [selectedCustomShiftId, setSelectedCustomShiftId] = useState(null);
-  const [isDeleteShiftModalOpen, setIsDeleteShiftModalOpen] = useState(false);
+  const [selectedShiftId, setSelectedShiftId] = useState("");
 
-  const [newShift, setNewShift] = useState({
-    name: "",
-    start: "",
-    end: "",
-  });
+  const [newShift, setNewShift] = useState({ name: "", start: "", end: "" });
+  const [isDeleteShiftModalOpen, setIsDeleteShiftModalOpen] = useState(false);
+  const [shiftList, setShiftList] = useState([]);
+
+  useEffect(() => {
+    axios
+      .get("https://projectmanagement-employe-1.onrender.com/api/shifttime")
+      .then((res) => {
+        setShiftList(res.data.data); // ✅ correct, this is the array
+
+        console.log("Fetched Shifts:", res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching shifts:", err);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (isDeleteShiftModalOpen) {
+      axios
+        .get("https://projectmanagement-employe-1.onrender.com/api/shifttime")
+        .then((res) => {
+          setShiftList(res.data.data); // response format confirmed
+        })
+        .catch((err) => {
+          console.error("Error fetching shifts:", err);
+        });
+    }
+  }, [isDeleteShiftModalOpen]);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState(null);
@@ -115,7 +145,9 @@ function New_Scheduling() {
       });
   }, []);
 
-  // console.log(staffMembers);
+  useEffect(() => {
+    dispatch(fetchShifts()); // Dispatch Redux action to fetch shifts
+  }, [dispatch]);
 
   const handleEventClick = (clickInfo) => {
     setCurrentEvent(clickInfo.event);
@@ -131,66 +163,98 @@ function New_Scheduling() {
     });
   };
 
-  // const handleSaveShift = () => {
-  //   const staffSelect = document.querySelector(".staff-select").value;
+  //   const staffId = document.querySelector(".staff-select").value;
   //   const shiftSelect = document.querySelector(".shift-select").value;
   //   const dateInput = document.querySelector('input[type="date"]').value;
   //   const notesInput = document.querySelector("textarea").value;
 
   //   const shiftTimes = {
-  //     1: { start: "07:00", end: "13:00" },
-  //     2: { start: "12:00", end: "18:00" },
+  //     1: { name: "Morning (07:00 - 13:00)", start: "07:00", end: "13:00" },
+  //     2: { name: "Afternoon (12:00 - 18:00)", start: "12:00", end: "18:00" },
   //   };
 
-  //   const selectedResource = resources.find((r) => r.id === staffSelect);
+  //   // const selectedStaff = staffMembers.find((s) => s._id === staffId);
+  //   const selectedStaff = staffMembers.find(
+  //     (s) => String(s.id) === String(staffId)
+  //   );
 
-  //   const newEvent = {
-  //     id: String(Math.random()),
-  //     resourceId: staffSelect,
-  //     title: `${shiftTimes[shiftSelect].start} - ${shiftTimes[shiftSelect].end}`,
-  //     start: `${dateInput}T${shiftTimes[shiftSelect].start}`,
-  //     end: `${dateInput}T${shiftTimes[shiftSelect].end}`,
-  //     backgroundColor: selectedResource.extendedProps.color,
+  //   if (!selectedStaff) {
+  //     alert("Invalid staff selected.");
+  //     return;
+  //   }
+
+  //   // Format date to DD-MM-YYYY
+  //   const formattedDate = new Date(dateInput)
+  //     .toLocaleDateString("en-GB")
+  //     .split("/")
+  //     .join("-");
+
+  //   const shiftData = {
+  //     staff_member: `${selectedStaff.name} - ${selectedStaff.role}`,
+  //     shift_name: shiftTimes[shiftSelect].name,
+  //     date: formattedDate,
   //     notes: notesInput,
+  //     employee_id: selectedStaff.employee_id || 3, // fallback if employee_id is missing
   //   };
 
-  //   setEvents([...events, newEvent]);
-  //   setIsPopupOpen(false);
+  //   try {
+  //     const res = await axios.post(
+  //       "https://projectmanagement-employe-1.onrender.com/shifts",
+  //       shiftData
+  //     );
+  //     console.log("Shift saved:", res.data);
+
+  //     // Optionally update UI
+  //     const newEvent = {
+  //       id: String(Math.random()),
+  //       resourceId: staffId,
+  //       title: `${shiftTimes[shiftSelect].start} - ${shiftTimes[shiftSelect].end}`,
+  //       start: `${dateInput}T${shiftTimes[shiftSelect].start}`,
+  //       end: `${dateInput}T${shiftTimes[shiftSelect].end}`,
+  //       backgroundColor: selectedStaff.color,
+  //       notes: notesInput,
+  //     };
+
+  //     setEvents([...events, newEvent]);
+  //     setIsPopupOpen(false);
+  //     alert("Shift saved successfully ✅");
+  //   } catch (error) {
+  //     console.error("Error saving shift:", error);
+  //     alert("Failed to save shift ❌");
+  //   }
   // };
 
   const handleSaveShift = async () => {
     const staffId = document.querySelector(".staff-select").value;
-    const shiftSelect = document.querySelector(".shift-select").value;
+    const shiftId = document.querySelector(".shift-select").value;
     const dateInput = document.querySelector('input[type="date"]').value;
     const notesInput = document.querySelector("textarea").value;
 
-    const shiftTimes = {
-      1: { name: "Morning (07:00 - 13:00)", start: "07:00", end: "13:00" },
-      2: { name: "Afternoon (12:00 - 18:00)", start: "12:00", end: "18:00" },
-    };
-
-    // const selectedStaff = staffMembers.find((s) => s._id === staffId);
+    // 🔍 Get full selected staff info
     const selectedStaff = staffMembers.find(
       (s) => String(s.id) === String(staffId)
     );
+    const selectedShift = shiftList.find(
+      (s) => String(s.id) === String(shiftId)
+    );
 
-    if (!selectedStaff) {
-      alert("Invalid staff selected.");
+    if (!selectedStaff || !selectedShift) {
+      alert("Please select valid Staff and Shift.");
       return;
     }
 
-    // Format date to DD-MM-YYYY
+    // ✅ Format date as DD-MM-YYYY
     const formattedDate = new Date(dateInput)
       .toLocaleDateString("en-GB")
       .split("/")
       .join("-");
 
     const shiftData = {
-      staff_member: `${selectedStaff.name} - ${selectedStaff.role}`,
-      shift_name: shiftTimes[shiftSelect].name,
+      staff_member: `${selectedStaff.first_name} ${selectedStaff.last_name} - ${selectedStaff.role}`,
+      shift_name: `${selectedShift.shift_type} (${selectedShift.start_time} - ${selectedShift.end_time})`,
       date: formattedDate,
       notes: notesInput,
-      employee_id: selectedStaff.employee_id || 3, // fallback if employee_id is missing
+      employee_id: selectedStaff.id,
     };
 
     try {
@@ -198,26 +262,40 @@ function New_Scheduling() {
         "https://projectmanagement-employe-1.onrender.com/shifts",
         shiftData
       );
-      console.log("Shift saved:", res.data);
 
-      // Optionally update UI
+      toast.success("Shift assigned successfully ✅");
+
+      // Optionally update calendar UI
       const newEvent = {
         id: String(Math.random()),
         resourceId: staffId,
-        title: `${shiftTimes[shiftSelect].start} - ${shiftTimes[shiftSelect].end}`,
-        start: `${dateInput}T${shiftTimes[shiftSelect].start}`,
-        end: `${dateInput}T${shiftTimes[shiftSelect].end}`,
-        backgroundColor: selectedStaff.color,
+        title: `${selectedShift.start_time} - ${selectedShift.end_time}`,
+        start: `${dateInput}T${convertTo24Hour(selectedShift.start_time)}`,
+        end: `${dateInput}T${convertTo24Hour(selectedShift.end_time)}`,
+        backgroundColor: "#b6e5ff", // custom color
         notes: notesInput,
       };
 
       setEvents([...events, newEvent]);
       setIsPopupOpen(false);
-      alert("Shift saved successfully ✅");
+      alert("Shift assigned successfully ✅");
     } catch (error) {
-      console.error("Error saving shift:", error);
-      alert("Failed to save shift ❌");
+      console.error("Failed to assign shift:", error);
+      toast.error("Failed to assign shift ❌");
     }
+  };
+
+  const convertTo24Hour = (timeStr) => {
+    const [time, modifier] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+
+    if (modifier === "PM" && hours < 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+      2,
+      "0"
+    )}`;
   };
 
   const renderResource = ({ resource }) => {
@@ -242,17 +320,60 @@ function New_Scheduling() {
         <Header />
         <div className="calendar-header">
           <h3>Schedule Calendar</h3>
-          <Link to="/admin/TimeEntry">
-            <button
-              style={{ display: "inline-block", textDecoration: "none" }}
-              className="add-employee-btn"
-            >
-              <span>+</span> Add Event
-            </button>
-          </Link>
         </div>
         <div className="dashboard-wrapper" style={{ backgroundColor: "white" }}>
           <div className="calendar-container">
+            {/* <FullCalendar
+              plugins={[
+                resourceTimelinePlugin,
+                timeGridPlugin,
+                dayGridPlugin,
+                interactionPlugin,
+              ]}
+              initialView="resourceTimelineWeek"
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,resourceTimelineWeek,timeGridDay",
+              }}
+              resources={resources}
+              events={events}
+              editable={true}
+              selectable={true}
+              selectMirror={true}
+              resourceAreaWidth="250px"
+              slotMinTime="07:00:00"
+              slotMaxTime="18:00:00"
+              allDaySlot={false}
+              weekends={false}
+              resourceLabelContent={renderResource}
+              eventClick={handleEventClick}
+              select={handleDateSelect}
+              height="auto"
+              initialDate={new Date()}
+              dayHeaderFormat={{
+                weekday: "short",
+                month: "numeric",
+                day: "numeric",
+              }}
+              views={{
+                resourceTimelineWeek: {
+                  type: "resourceTimeline",
+                  duration: { days: 5 },
+                  slotDuration: { hours: 6 },
+                  buttonText: "Week",
+                },
+                dayGridMonth: {
+                  type: "dayGrid",
+                  buttonText: "Month",
+                },
+                timeGridDay: {
+                  type: "timeGrid",
+                  buttonText: "Day",
+                },
+              }}
+            /> */}
+
             <FullCalendar
               plugins={[
                 resourceTimelinePlugin,
@@ -303,6 +424,8 @@ function New_Scheduling() {
                 },
               }}
             />
+
+            <ToastContainer position="top-right" autoClose={3000} />
             {isPopupOpen && (
               <div className="popup">
                 <div className="popup-content">
@@ -320,19 +443,15 @@ function New_Scheduling() {
 
                   <div className="form-group">
                     <label>Shift:</label>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <select className="shift-select">
-                        <option value="1">Morning (07:00 - 13:00)</option>
-                        <option value="2">Afternoon (12:00 - 18:00)</option>
-                        {customShifts.map((shift, index) => (
-                          <option
-                            key={`custom-${index}`}
-                            value={`custom-${index}`}
-                          >
-                            {shift.name} ({shift.start} - {shift.end})
-                          </option>
-                        ))}
-                      </select>
+                    <select className="shift-select">
+                      {shiftList.map((shift) => (
+                        <option key={shift.id} value={shift.id}>
+                          {shift.shift_type} ({shift.start_time} -{" "}
+                          {shift.end_time})
+                        </option>
+                      ))}
+                    </select>
+                    <div>
                       <button
                         onClick={() => setIsShiftModalOpen(true)}
                         style={{
@@ -345,7 +464,6 @@ function New_Scheduling() {
                       >
                         ➕
                       </button>
-
                       <button
                         onClick={() => setIsDeleteShiftModalOpen(true)}
                         style={{
@@ -400,58 +518,6 @@ function New_Scheduling() {
                 </div>
               </div>
             )}
-
-            {/* {isShiftModalOpen && (
-              <div className="popup">
-                <div className="popup-content">
-                  <h4>Add New Shift</h4>
-                  <div className="form-group">
-                    <label>Shift Name</label>
-                    <input
-                      type="text"
-                      value={newShift.name}
-                      onChange={(e) =>
-                        setNewShift({ ...newShift, name: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Start Time</label>
-                    <input
-                      type="time"
-                      value={newShift.start}
-                      onChange={(e) =>
-                        setNewShift({ ...newShift, start: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>End Time</label>
-                    <input
-                      type="time"
-                      value={newShift.end}
-                      onChange={(e) =>
-                        setNewShift({ ...newShift, end: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="button-group">
-                    <button
-                      onClick={() => {
-                        setCustomShifts([...customShifts, newShift]);
-                        setNewShift({ name: "", start: "", end: "" });
-                        setIsShiftModalOpen(false);
-                      }}
-                    >
-                      Add Shift
-                    </button>
-                    <button onClick={() => setIsShiftModalOpen(false)}>
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )} */}
 
             {isShiftModalOpen && (
               <div className="popup">
@@ -553,16 +619,18 @@ function New_Scheduling() {
               <div className="popup">
                 <div className="popup-content">
                   <h4>Delete Shift</h4>
+
                   <div className="form-group">
                     <label>Select Shift to Delete</label>
                     <select
-                      value={selectedCustomShiftId || ""}
-                      onChange={(e) => setSelectedCustomShiftId(e.target.value)}
+                      value={selectedShiftId}
+                      onChange={(e) => setSelectedShiftId(e.target.value)}
                     >
-                      <option value="">Select a shift</option>
-                      {customShifts.map((shift, index) => (
-                        <option key={index} value={index}>
-                          {shift.name} ({shift.start} - {shift.end})
+                      <option value="">-- Select a shift --</option>
+                      {shiftList.map((shift) => (
+                        <option key={shift.id} value={shift.id}>
+                          {shift.shift_type} ({shift.start_time} -{" "}
+                          {shift.end_time})
                         </option>
                       ))}
                     </select>
@@ -572,22 +640,22 @@ function New_Scheduling() {
                     <button
                       className="delete-button"
                       onClick={async () => {
-                        if (selectedCustomShiftId === null) return;
-
-                        const shiftToDelete =
-                          customShifts[selectedCustomShiftId];
+                        if (!selectedShiftId) {
+                          alert("Please select a shift to delete.");
+                          return;
+                        }
 
                         try {
-                          // Call DELETE API if backend shift has an ID
                           await axios.delete(
-                            `https://projectmanagement-employe-1.onrender.com/shifts/${shiftToDelete.id}`
+                            `https://projectmanagement-employe-1.onrender.com/api/shifttime/${selectedShiftId}`
                           );
 
-                          const updated = [...customShifts];
-                          updated.splice(selectedCustomShiftId, 1);
-                          setCustomShifts(updated);
+                          const updated = shiftList.filter(
+                            (shift) => shift.id !== parseInt(selectedShiftId)
+                          );
+                          setShiftList(updated);
+                          setSelectedShiftId("");
                           setIsDeleteShiftModalOpen(false);
-                          setSelectedCustomShiftId(null);
                           alert("Shift deleted successfully ✅");
                         } catch (error) {
                           console.error("Error deleting shift:", error);
@@ -597,6 +665,7 @@ function New_Scheduling() {
                     >
                       Delete
                     </button>
+
                     <button onClick={() => setIsDeleteShiftModalOpen(false)}>
                       Cancel
                     </button>
