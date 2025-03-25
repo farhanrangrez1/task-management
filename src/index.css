@@ -3948,7 +3948,25 @@ td {
   margin: 5px 0;
 }
 
+.status-select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background-color: rgb(178, 189, 77);
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 120px;
+}
 
+.status-select:hover {
+  border-color: #999;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0,102,204,0.2);
+}
 
 
 

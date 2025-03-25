@@ -38,13 +38,17 @@ export const createProject = createAsyncThunk(
 
 export const updateProjectStatus = createAsyncThunk(
   'project/updateProjectstatus',
-  async ({id, status}, { rejectWithValue }) => { 
+  async ({id, project_status}, { rejectWithValue }) => { 
     try { 
-      const response = await axios.put(`${API_URL}/projects/${id}/status`, {status}
-      );
-      return response.data;
+      const response = await axios.put(`${API_URL}/projects/${id}/status`, {
+        project_status
+      });
+      return {
+        id: id,
+        project_status: project_status
+      };
     } catch (error) {
-      return rejectWithValue(error.response.data.message || 'Error updating Project status');
+      return rejectWithValue(error.response?.data?.message || 'Error updating Project status');
     }
   }
 );
@@ -96,11 +100,17 @@ const ProjectSlice = createSlice({
 
       builder
       .addCase(updateProjectStatus.fulfilled, (state, action) => {
-        const index = state.projects.findIndex((project) => project.id === action.payload.id);
+        state.loading = false;
+        const index = state.projects.findIndex(
+          (project) => project.id === action.payload.id
+        );
         if (index !== -1) {
-          state.projects[index].is_active = action.payload.is_active;
+          state.projects[index] = {
+            ...state.projects[index],
+            project_status: action.payload.project_status
+          };
         }
-      } ) 
+      })
 
 
          builder

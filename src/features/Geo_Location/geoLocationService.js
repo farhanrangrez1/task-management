@@ -39,7 +39,7 @@ const GetEmployeStatusList = async (data) => {
 
 const LatestLocactionList = async (data) => {
     try {
-        const response = await axios.get(`${API_URL}/api/latest_location?employname=Aditya123`,data);
+        const response = await axios.get(`${API_URL}/api/latest_location?employeeID=`,data);
         return response.data; 
     } catch (error) {
         throw new Error(error.message);

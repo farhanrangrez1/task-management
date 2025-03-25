@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { BsBell } from 'react-icons/bs';
 import Header from './Header';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteProject, getProjects } from '../features/Project/ProjectSlice';
+import { deleteProject, getProjects, updateProjectStatus } from '../features/Project/ProjectSlice';
 import { getEmployees } from '../features/Employee/EmployeeSlice';
 
 import Swal from 'sweetalert2';
@@ -14,8 +14,8 @@ function Projects() {
 
    const dispatch = useDispatch();
    const { employees } = useSelector((state) => state.employees);
-   const { projects = [], loading, error } = useSelector((state) => state.projects || {});
-   console.log(projects);
+   const { projects , loading, error } = useSelector((state) => state.projects );
+   console.log("proects",projects);
 
    useEffect(() => {
     dispatch(getProjects());
@@ -29,8 +29,74 @@ function Projects() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [teamFilter, setTeamFilter] = useState('All');
 
+  const PROJECT_STATUSES = [
+    'Not Started',
+    'In Progress',
+    'On Hold',
+    'Completed'
+  ];
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'Not Started':
+      return '#ff6b6b'; // Red
+    case 'In Progress':
+      return '#339af0'; // Blue
+    case 'On Hold':
+      return '#ffd43b'; // Yellow
+    case 'Completed':
+      return '#51cf66'; // Green
+    default:
+      return '#868e96'; // Gray
+  }
+};
+  const handleStatusChange = async (id, newStatus) => {
 
 
+    Swal.fire({
+      title: 'Are you sure Update Status to ' + newStatus + '?',
+      // text: 'You won’t be able to revert this!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(updateProjectStatus({ id, project_status: newStatus })).unwrap();
+        Swal.fire({
+          title: 'Updated!',
+          text: 'Project Status has been update.',
+          icon: 'success',
+          timer: 2000,
+        });
+      }
+    });
+  };
+
+  // const handleStatusChange = async (id, newStatus) => {
+  //   try {
+  //     await dispatch(updateProjectStatus({ 
+  //       id, 
+  //       project_status: newStatus 
+  //     })).unwrap();
+      
+  //     // Optional: Show success message
+  //     Swal.fire({
+  //       title: 'Success!',
+  //       text: 'Project status updated successfully',
+  //       icon: 'success',
+  //       timer: 2000
+  //     });
+  //   } catch (error) {
+  //     // Show error message
+  //     Swal.fire({
+  //       title: 'Error!',
+  //       text: error.message || 'Failed to update project status',
+  //       icon: 'error'
+  //     });
+  //   }
+  // };
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
@@ -160,13 +226,51 @@ function Projects() {
                           <td>{Array.isArray(project?.team_members) ? project.team_members.length : 0}</td>
 
                           <td>
-                            <div className="project-address">{project?.project_status}</div>
+                            {/* <select
+                              className="status-select"
+                              value={project?.project_status || ''}
+                              onChange={(e) => handleStatusChange(project.id, e.target.value)}
+                            >
+                              {PROJECT_STATUSES.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select> */}
+
+<select
+    className="status-select"
+    value={project?.project_status || ''}
+    onChange={(e) => handleStatusChange(project.id, e.target.value)}
+    style={{
+      backgroundColor: getStatusColor(project?.project_status),
+      color: 'white',
+      border: 'none',
+      padding: '8px 12px',
+      borderRadius: '4px',
+      fontWeight: '500',
+      cursor: 'pointer'
+    }}
+  >
+    {PROJECT_STATUSES.map((status) => (
+      <option 
+        key={status} 
+        value={status}
+        style={{
+          backgroundColor: 'white',
+          color: '#333'
+        }}
+      >
+        {status}
+      </option>
+    ))}
+  </select>
                           </td>
                           <td>{project?.start_date}</td>
                           <td>{project?.due_date}</td>
                           <td>
                             <div className="action-buttons">
-                              <button className="action-btn edit"><BiEdit /></button>
+                              {/* <button className="action-btn edit"><BiEdit /></button> */}
                               <button className="action-btn delete" onClick={() => handleDelete(project?.id)}><BiTrash /></button>
                             </div>
                           </td>

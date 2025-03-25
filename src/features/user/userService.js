@@ -10,6 +10,7 @@ const LoginFrom = async(data) => {
         if(response.data.role) {
             localStorage.setItem('role', response.data.role);
             localStorage.setItem('token', response.data.access_token);
+            // localStorage.setItem('')
             localStorage.setItem('user', JSON.stringify(response.data) );
             
             toast.success('Login successful!');
