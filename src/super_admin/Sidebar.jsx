@@ -3,57 +3,68 @@ import { Link, useLocation } from 'react-router-dom';
 import { AiOutlineHome, AiOutlineMenu, AiOutlineClose } from 'react-icons/ai';
 import { HiOutlineUsers } from 'react-icons/hi';
 import { BsChatSquareDots, BsCalendar4, BsClock, BsListTask, BsShield } from 'react-icons/bs';
-import { VscProject ,VscAccount} from 'react-icons/vsc';
+import { VscProject } from 'react-icons/vsc';
 import { FaMapMarkerAlt } from "react-icons/fa";
+
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
 
   const menuItems = [
     {
-      path: '/contractor',
+      path: '/super_admin',
       name: 'Dashboard',
       icon: <AiOutlineHome size={18} />
     },
     {
-      path: '/contractor/schedule',
-      name: 'Schedule',
+      path: '/super_admin/employeeTable',
+      name: 'Employees',
       icon: <HiOutlineUsers size={18} />
     },
     {
-      path: '/contractor/task',
-      name: 'Tasks',
-      icon: <BsListTask size={18} />
+      path: '/super_admin/communicationTable',
+      name: 'Communication',
+      icon: <BsChatSquareDots size={18} />
     },
     {
-      path: '/contractor/timeTracking',
+      path: '/super_admin/schedulingTable',
+      name: 'Scheduling',
+      icon: <BsCalendar4 size={18} />
+    },
+    {
+      path: '/super_admin/newScheduling',
       name: 'Time Tracking',
       icon: <BsClock size={18} />
     },
     {
-      path: '/contractor/chat',
-      name: 'Team Chat',
-      icon: <BsChatSquareDots size={18} />
+      path: '/super_admin/tasksOverview',
+      name: 'Tasks',
+      icon: <BsListTask size={18} />
     },
     {
-      path: '/contractor/policy',
-      name: 'Policy',
-      icon: <BsCalendar4 size={18} />
-    },
-    {
-      path: '/contractor/leavemanagement',
-      name: 'Leave Management',
+      path: '/super_admin/projects',
+      name: 'Projects',
       icon: <VscProject size={18} />
     },
     {
-      path: "/contractor/profile",
-      name: "Profile",
-      icon: <VscAccount size={18} />,
+      path: '/super_admin/compliance',
+      name: 'Compliance',
+      icon: <BsShield size={18} />
     },
     {
-      path: '/contractor/LatestLocaction',
-      name: 'Latest Locaction ',
+      path: '/super_admin/setGeophence',
+      name: 'Set Geophence',
       icon: <FaMapMarkerAlt size={18} />
+    },
+    {
+      path: '/super_admin/getEmployeStatus',
+      name: 'List GetEmployeStatus',
+      icon: <FaMapMarkerAlt size={18} />
+    },
+    {
+     path: '/super_admin/latestLocaction',
+     name: 'LatestLocaction',
+     icon: <FaMapMarkerAlt size={18} />
     },
   ];
 
@@ -62,17 +73,17 @@ const Sidebar = () => {
   };
 
   return (
-    <div >
+    <>
       <button className="sidebar-toggle" onClick={toggleSidebar}>
         {isSidebarOpen ? <AiOutlineClose size={24} /> : <AiOutlineMenu size={24} />}
       </button>
 
       <div className={`admin-sidebar ${isSidebarOpen ? 'show' : ''}`}>
-        <div className="admin-logo" >
+        <div className="admin-logo">
           <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
             <path d="M20 8L32 16V24L20 32L8 24V16L20 8Z" fill="#4F46E5"/>
           </svg>
-          <h3>Contractor</h3>
+          <h3>Super Admin</h3>
         </div>
         <nav className="admin-nav">
           {menuItems.map((item, index) => (
@@ -94,7 +105,7 @@ const Sidebar = () => {
         </nav>
       </div>
       {isSidebarOpen && <div className="sidebar-overlay" onClick={toggleSidebar}></div>}
-    </div>
+    </>
   );
 };
 

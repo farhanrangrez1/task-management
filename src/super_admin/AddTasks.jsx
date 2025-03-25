@@ -59,7 +59,7 @@ function AddTasks() {
     }
 
        // Show success toast message
-       toast.success('New Task added successfully!', {
+       toast.success('Employee added successfully!', {
         position: 'top-center',
         autoClose: 2000, 
       });

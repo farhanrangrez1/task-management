@@ -6,6 +6,8 @@ import PolicyReducer from "./Policy/PolicySlice";
 import LeaveReducer from "./LeaveManagement/LeaveSlice"
 import ProfileReducer from "./Profile/ProfileSlice";
 import EmployeeSlice from './Employee/EmployeeSlice'
+import ChatsReducer from "./Chats/ChatsSlice"
+
 const store = configureStore({
     reducer: {
         geoLocation:geoLocationReducer,
@@ -14,7 +16,8 @@ const store = configureStore({
         policy:PolicyReducer,
         leave:LeaveReducer,
         profile:ProfileReducer,
-        employees:EmployeeSlice
+        employees:EmployeeSlice,
+        chats:ChatsReducer
     }
 });
 

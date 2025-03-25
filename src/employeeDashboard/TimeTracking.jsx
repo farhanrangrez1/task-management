@@ -180,10 +180,10 @@ const TimeTrackingDashboard = () => {
                 <div className="card-body p-4">
                   <h5 className="card-title mb-4">Attendance Overview</h5>
                   <div className="row g-3">
-                    {renderAttendanceCard("Logged In", attendanceData.loggedIn)}
-                    {renderAttendanceCard("Absent", attendanceData.absent)}
-                    {renderAttendanceCard("Late", attendanceData.late)}
-                    {renderAttendanceCard("Undertime", attendanceData.undertime)} 
+                    {/* {renderAttendanceCard("Logged In", attendanceData.loggedIn)} */}
+                    {/* {renderAttendanceCard("Absent", attendanceData.absent)} */}
+                    {/* {renderAttendanceCard("Late", attendanceData.late)} */}
+                    {/* {renderAttendanceCard("Undertime", attendanceData.undertime)}  */}
                     {renderAttendanceCard("Monthly Total Hours", attendanceData.monthly)}
                     {renderAttendanceCard("Weekly hours total", attendanceData.weekly)}
                   </div>                  <p className="small text-muted mt-3">

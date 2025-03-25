@@ -5,9 +5,7 @@ import Sidebar from "./Sidebar";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { TasksList } from "../features/Tasks/TasksSlice";
-import { tasksDelete, updateTasks } from '../features/Tasks/TasksSlice';
-import Swal from 'sweetalert2';
-import { FiTrash2, FiMessageSquare, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
+
 const TasksOverview = () => {
   const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,9 +16,9 @@ const TasksOverview = () => {
       dispatch(TasksList());
   }, [dispatch]);
 
-  const filteredTasks = tasksOverviewAll ? tasksOverviewAll.filter(task => 
-    task.assigned_to?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) : [];
+  const filteredTasks = tasksOverviewAll?.filter(task => 
+    task?.assigned_to?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) ?? [];
 
   return (
     <div className="dashboard-wrapper d-flex">
@@ -41,60 +39,76 @@ const TasksOverview = () => {
             />
           </div>
         </div>
-        <div className="tasks-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Task Name</th>
-                  <th>Project</th>
-                  <th>Due Date</th>
-                  <th>Status</th>
-                  <th>Priority</th>
-                </tr>
-              </thead>
-              <tbody> 
-              {filteredTasks?.length > 0 ? (
-                filteredTasks.map((task,index) => (
-                  <tr key={task.id}>
-                    <td>{task.assigned_to}</td>
-                    <td>{task.project}</td>
-                    <td>{new Date(task.due_date).toLocaleDateString()}</td>
-                    <td>
-                    <span className={`status-badge ${task.status.toLowerCase()}`}>
-{task.status}
-</span>
-                    </td>
-                    <td>
-                    
-<span className={`priority-badge ${task.priority.toLowerCase()}`}>
-  {task.priority}
-</span>
-                    </td>
-                    <td>
-                  
-                     </td>
-                  </tr>
-               ))
+
+        <div className="table-responsive">
+          <div className="task-table-container" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+            <div className="task-fields-header d-flex p-2 bg-light border-bottom sticky-top">
+              <div className="task-left d-flex align-items-center" style={{ flex: 1, minWidth: '1000px' }}>
+                <span style={{ width: '120px' }}>Status</span>
+                <span style={{ width: '150px' }}>Assigned To</span>
+                <span style={{ width: '200px' }}>Title</span>
+                <span style={{ width: '250px' }}>Description</span>
+                <span style={{ width: '150px' }}>Project</span>
+                <span style={{ width: '100px' }}>Priority</span>
+                <span style={{ width: '120px' }}>Due Date</span>
+              </div>
+            </div>
+
+            <div className="task-list">
+              {isLoading ? (
+                <div className="task-item text-center p-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="text-muted mt-2">Loading tasks...</p>
+                </div>
+              ) : isError ? (
+                <div className="task-item text-center p-4">
+                  <p className="text-danger m-0">{message || 'Error loading tasks'}</p>
+                </div>
+              ) : filteredTasks?.length === 0 ? (
+                <div className="task-item text-center p-4">
+                  <p className="text-muted m-0">No tasks found for this search.</p>
+                </div>
               ) : (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center' }}>
-                    No employees found
-                  </td>
-                </tr>
+                filteredTasks?.map(task => (
+                  <div key={task?.id} className="task-item d-flex align-items-center p-2 border-bottom">
+                    <div className="task-left d-flex align-items-center" style={{ flex: 1, minWidth: '1000px' }}>
+                      <span style={{ width: '120px' }}>
+                        <span className={`status-badge ${task?.status?.toLowerCase()}`}>
+                          {task?.status}
+                        </span>
+                      </span>
+                      <span style={{ width: '150px' }}>
+                        {task?.assigned_to}
+                      </span>
+                      <span style={{ width: '200px' }}>
+                        {task?.title}
+                      </span>
+                      <span style={{ width: '250px' }}>
+                        {task?.description}
+                      </span>
+                      <span style={{ width: '150px' }}>
+                        {task?.project}
+                      </span>
+                      <span style={{ width: '100px' }}>
+                        <span className={`priority-badge ${task?.priority?.toLowerCase()}`}>
+                          {task?.priority}
+                        </span>
+                      </span>
+                      <span style={{ width: '120px' }}>
+                        {task?.due_date}
+                      </span>
+                    </div>
+                  </div>
+                ))
               )}
-              </tbody>
-            </table>
+            </div>
           </div>
         </div>
       </div>
+    </div>
   );
 };
 
 export default TasksOverview;
-
-
-
-
-
-
-

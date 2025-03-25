@@ -16,12 +16,12 @@ function CommunicationTable() {
         <div className="communication-header">
           <h3>Communication</h3>
           <div className="communication-buttons"  style={{display:"flex",alignItems:"center",gap:"10px"}}>
-            <Link to="/admin/create-group-chat">
+            <Link to="/create-group-chat">
               <button className="add-employee-btn" style={{ marginRight: '10px' }}>
                 <span>+</span> Create Group Chat
               </button>
             </Link>
-            <Link to="/admin/addCommunication">
+            <Link to="/addCommunication">
               <button className="add-employee-btn">
                 <span>+</span> New Message
               </button>

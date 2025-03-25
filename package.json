@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
@@ -18,6 +20,8 @@
     "@fullcalendar/resource-timeline": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
     "@mobiscroll/react-lite": "^4.10.9",
+    "@mui/icons-material": "^6.4.8",
+    "@mui/material": "^6.4.8",
     "@reduxjs/toolkit": "^2.6.1",
     "axios": "^1.8.3",
     "bootstrap": "^5.3.3",
@@ -37,6 +41,7 @@
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.1",
     "redux": "^5.0.1",
+    "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.17.2"
   },
   "devDependencies": {
