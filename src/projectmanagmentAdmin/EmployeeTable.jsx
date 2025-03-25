@@ -8,7 +8,7 @@ import { getEmployees, deleteEmployee, updateEmployeeStatus } from '../features/
 import { useDispatch, useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 
-function EmployeeTable() {
+export function EmployeeTable() {
   const dispatch = useDispatch();
   const { employees } = useSelector((state) => state.employees);
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,6 +69,7 @@ function EmployeeTable() {
 
     return matchesSearch && matchesStatus;
   });
+  
 
   return (
     <div className="admin-dashboard-container">
