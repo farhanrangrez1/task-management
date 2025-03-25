@@ -14,6 +14,7 @@ function Add_employee() {
     email: '',
     password: '',
     phone: '',
+    role:'employee'
   });
 
   // Handle form change
