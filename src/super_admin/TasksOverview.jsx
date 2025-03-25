@@ -57,6 +57,7 @@ function TasksOverview() {
   const [activeTab, setActiveTab] = useState('All Tasks');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  
   // tasks All
   const { tasksOverviewAll} = useSelector((state) => state.tasks);
   useEffect(() => {
@@ -77,7 +78,6 @@ function TasksOverview() {
 
   // Delete tasks
   const handleDelete = (id) => {
-    console.log(id);
     Swal.fire({
       title: 'Are you sure?',
       text: 'You won’t be able to revert this!',
@@ -91,7 +91,7 @@ function TasksOverview() {
         dispatch(tasksDelete(id));
         Swal.fire({
           title: 'Deleted!',
-          text: 'Task has been deleted.',
+          text: 'Employee has been deleted.',
           icon: 'success',
           timer: 2000,
         });
@@ -181,7 +181,7 @@ function TasksOverview() {
               {filteredTasksList?.length > 0 ? (
                 filteredTasksList.map((task,index) => (
                   <tr key={task.id}>
-                    <td>{task.assigned_to}</td>
+                    <td>{task.title}</td>
                     <td>{task.project}</td>
                     <td>{new Date(task.due_date).toLocaleDateString()}</td>
                     <td>

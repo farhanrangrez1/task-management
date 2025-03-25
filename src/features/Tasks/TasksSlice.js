@@ -82,9 +82,9 @@ export const TasksList = createAsyncThunk(
   
   export const tasksDelete = createAsyncThunk(
     "tasksOverviewAll/tasksDelete",
-    async (id, {rejectWithValue }) => {          
+    async (data, {rejectWithValue }) => {          
       try {
-        const response = await TasksService.tasksDelete(id);
+        const response = await TasksService.tasksDelete(data);
         return response;
       } catch (error) {
         return rejectWithValue(error.message);

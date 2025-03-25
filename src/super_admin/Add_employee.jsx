@@ -14,7 +14,6 @@ function Add_employee() {
     email: '',
     password: '',
     phone: '',
-    role:'employee'
   });
 
   // Handle form change
@@ -40,7 +39,6 @@ function Add_employee() {
       email: '',
       password: '',
       phone: '',
-      role:"contractor"
     });
   };
 

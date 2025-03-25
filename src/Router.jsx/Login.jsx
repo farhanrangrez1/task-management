@@ -98,8 +98,17 @@ const handleChange=(e)=>{
                     Employee
                   </button>
                 </Link>
+                <Link to="/contractor" className="full-width-link">
+                  <button type="button" className="employee-role-button">
+                  contractor
+                  </button>
+                </Link>
+                <Link to="/super_admin" className="full-width-link">
+                  <button type="button" className="employee-role-button">
+                  Super admin
+                  </button>
+                </Link>
               </div>
-
               <div className="admin-divider">
                 <span>Or continue with</span>
               </div>
