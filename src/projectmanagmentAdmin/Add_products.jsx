@@ -1,38 +1,32 @@
-
-
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { BiCalendar, BiX } from 'react-icons/bi';
-import Sidebar from './Sidebar';
-import { BiSearch } from 'react-icons/bi';
-import { BsBell } from 'react-icons/bs';
-import { Link, useNavigate } from 'react-router-dom';
-import Header from './Header';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { createProject } from '../features/Project/ProjectSlice';
-import { getEmployees } from '../features/Employee/EmployeeSlice';
-
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { BiCalendar } from "react-icons/bi";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { createProject } from "../features/Project/ProjectSlice";
+import { getEmployees } from "../features/Employee/EmployeeSlice";
+import { useNavigate } from "react-router-dom";
 
 function Add_products() {
-const navigate = useNavigate();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.projects); // Redux state
-
-
+  const { loading, error } = useSelector((state) => state.projects);
   const { employees } = useSelector((state) => state.employees);
+
   useEffect(() => {
     dispatch(getEmployees());
   }, [dispatch]);
 
   const [formData, setFormData] = useState({
-    project_name: '',
-    description: '',
-    project_lead: '',
-    start_date: '',
-    due_date: '',
-    team_members: '',
-    project_status: '',
+    project_name: "",
+    description: "",
+    project_lead: "",
+    start_date: "",
+    due_date: "",
+    team_members: [],
+    project_status: "Not Started",
   });
 
   const [errors, setErrors] = useState({});
@@ -41,22 +35,43 @@ const navigate = useNavigate();
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
 
+  const handleTeamMemberChange = (e) => {
+    const selectedId = e.target.value;
+    if (selectedId && !formData.team_members.includes(selectedId)) {
+      setFormData((prev) => ({
+        ...prev,
+        team_members: [...prev.team_members, selectedId],
+      }));
+    }
+  };
+
+  const removeTeamMember = (id) => {
+    setFormData((prev) => ({
+      ...prev,
+      team_members: prev.team_members.filter((member) => member !== id),
+    }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.project_name.trim()) newErrors.project_name = 'Project name is required';
-    if (!formData.project_lead) newErrors.project_lead = 'Project lead is required';
-    if (!formData.start_date) newErrors.start_date = 'Start date is required';
-    if (!formData.due_date) newErrors.due_date = 'Due date is required';
+    if (!formData.project_name.trim())
+      newErrors.project_name = "Project name is required";
+    if (!formData.project_lead)
+      newErrors.project_lead = "Project lead is required";
+    if (!formData.start_date)
+      newErrors.start_date = "Start date is required";
+    if (!formData.due_date)
+      newErrors.due_date = "Due date is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -67,27 +82,25 @@ const navigate = useNavigate();
     if (validateForm()) {
       const formattedData = {
         ...formData,
-        team_members: formData.team_members.split(',').map((member) => member.trim()), // Convert string to array
+        team_members: formData.team_members, // Already an array of IDs
       };
 
       dispatch(createProject(formattedData))
         .unwrap()
         .then(() => {
-          toast.success('Project created successfully!', {
-            position: 'top-center',
+          toast.success("Project created successfully!", {
+            position: "top-center",
             autoClose: 2000,
           });
+          navigate("/admin/projects");
         })
         .catch(() => {
-          toast.error('Error creating project', {
-            position: 'top-center',
+          toast.error("Error creating project", {
+            position: "top-center",
           });
         });
     }
   };
-
-  const filteredEmployees = employees.filter((emp) => emp.role.toLowerCase() === 'employee');
-
 
   return (
     <div className="admin-dashboard-container">
@@ -107,9 +120,11 @@ const navigate = useNavigate();
                   placeholder="Enter project name"
                   value={formData.project_name}
                   onChange={handleInputChange}
-                  className={errors.project_name ? 'error' : ''}
+                  className={errors.project_name ? "error" : ""}
                 />
-                {errors.project_name && <span className="error-message">{errors.project_name}</span>}
+                {errors.project_name && (
+                  <span className="error-message">{errors.project_name}</span>
+                )}
               </div>
 
               <div className="form-group">
@@ -129,16 +144,18 @@ const navigate = useNavigate();
                   name="project_lead"
                   value={formData.project_lead}
                   onChange={handleInputChange}
-                  className={errors.project_lead ? 'error' : ''}
+                  className={errors.project_lead ? "error" : ""}
                 >
                   <option value="">Select project lead</option>
                   {employees.map((employee) => (
-                    <option key={employee.id} value={employee.first_name}>
-                      {employee.first_name}
+                    <option key={employee.id} value={employee.id}>
+                      {employee.first_name} {employee.last_name}
                     </option>
                   ))}
                 </select>
-                {errors.project_lead && <span className="error-message">{errors.project_lead}</span>}
+                {errors.project_lead && (
+                  <span className="error-message">{errors.project_lead}</span>
+                )}
               </div>
 
               <div className="form-row">
@@ -150,11 +167,13 @@ const navigate = useNavigate();
                       name="start_date"
                       value={formData.start_date}
                       onChange={handleInputChange}
-                      className={errors.start_date ? 'error' : ''}
+                      className={errors.start_date ? "error" : ""}
                     />
                     <BiCalendar className="calendar-icon" />
                   </div>
-                  {errors.start_date && <span className="error-message">{errors.start_date}</span>}
+                  {errors.start_date && (
+                    <span className="error-message">{errors.start_date}</span>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -165,23 +184,41 @@ const navigate = useNavigate();
                       name="due_date"
                       value={formData.due_date}
                       onChange={handleInputChange}
-                      className={errors.due_date ? 'error' : ''}
+                      className={errors.due_date ? "error" : ""}
                     />
                     <BiCalendar className="calendar-icon" />
                   </div>
-                  {errors.due_date && <span className="error-message">{errors.due_date}</span>}
+                  {errors.due_date && (
+                    <span className="error-message">{errors.due_date}</span>
+                  )}
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Team Members (comma-separated)</label>
-                <input
-                  type="text"
-                  name="team_members"
-                  placeholder="Enter team members (e.g., John Smith, Jane Doe)"
-                  value={formData.team_members}
-                  onChange={handleInputChange}
-                />
+                <label>Team Members</label>
+                <select onChange={handleTeamMemberChange}>
+                  <option value="">Select team members</option>
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.first_name} {employee.last_name}
+                    </option>
+                  ))}
+                </select>
+                <div className="selected-team-members">
+                  {formData.team_members.map((id) => {
+                    const employee = employees.find((emp) => emp.id === id);
+                    return (
+                      employee && (
+                        <span key={id} className="selected-member">
+                          {employee.first_name} {employee.last_name}
+                          <button type="button" onClick={() => removeTeamMember(id)}>
+                            ✖
+                          </button>
+                        </span>
+                      )
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="form-group">
@@ -199,15 +236,16 @@ const navigate = useNavigate();
               </div>
 
               <div className="form-actions">
-                <button type="button" className="cancel-btn" onClick={() => navigate(-1)}>Cancel</button>
+                <button type="button" className="cancel-btn" onClick={() => navigate(-1)}>
+                  Cancel
+                </button>
                 <button type="submit" className="create-btn" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create Project'}
+                  {loading ? "Creating..." : "Create Project"}
                 </button>
               </div>
             </form>
 
             {error && <p className="error-message">{error}</p>}
-
             <ToastContainer />
           </div>
         </div>

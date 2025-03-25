@@ -36,14 +36,15 @@ export const createProject = createAsyncThunk(
   }
 );
 
-export const updateProject = createAsyncThunk(
-  "project/updateProject",
-  async (projectData, { rejectWithValue }) => {
-    try {
-      const response = await axios.put(`${API_URL}/projects/${projectData.id}`, projectData);
+export const updateProjectStatus = createAsyncThunk(
+  'project/updateProjectstatus',
+  async ({id, status}, { rejectWithValue }) => { 
+    try { 
+      const response = await axios.put(`${API_URL}/projects/${id}/status`, {status}
+      );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data.message || "Error updating project");
+      return rejectWithValue(error.response.data.message || 'Error updating Project status');
     }
   }
 );
@@ -85,30 +86,22 @@ const ProjectSlice = createSlice({
       })
       .addCase(createProject.fulfilled, (state, action) => {
         state.loading = false;
-        state.projects.push(action.payload);
+        state.error = null;
+        state.projects = [...state.projects, action.payload];
       })
       .addCase(createProject.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
 
-
       builder
-      .addCase(updateProject.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(updateProject.fulfilled, (state, action) => {
-        state.loading = false;
-        const updatedProject = action.payload;
-        const index = state.projects.findIndex((project) => project.id === updatedProject.id);
+      .addCase(updateProjectStatus.fulfilled, (state, action) => {
+        const index = state.projects.findIndex((project) => project.id === action.payload.id);
         if (index !== -1) {
-          state.projects[index] = updatedProject;
+          state.projects[index].is_active = action.payload.is_active;
         }
-      })
-      .addCase(updateProject.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+      } ) 
+
 
          builder
             .addCase(deleteProject.fulfilled, (state, action) => {

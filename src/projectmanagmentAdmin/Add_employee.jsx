@@ -39,6 +39,7 @@ function Add_employee() {
       email: '',
       password: '',
       phone: '',
+      role:"contractor"
     });
   };
 

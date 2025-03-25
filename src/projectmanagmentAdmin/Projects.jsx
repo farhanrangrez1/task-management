@@ -6,16 +6,20 @@ import { BsBell } from 'react-icons/bs';
 import Header from './Header';
 import { useSelector, useDispatch } from 'react-redux';
 import { deleteProject, getProjects } from '../features/Project/ProjectSlice';
+import { getEmployees } from '../features/Employee/EmployeeSlice';
+
 import Swal from 'sweetalert2';
 
 function Projects() {
 
    const dispatch = useDispatch();
-   const { projects  } = useSelector((state) => state?.projects );
+   const { employees } = useSelector((state) => state.employees);
+   const { projects = [], loading, error } = useSelector((state) => state.projects || {});
    console.log(projects);
 
    useEffect(() => {
     dispatch(getProjects());
+    dispatch(getEmployees());
   }, [dispatch]);
 
    console.log("PROJECTS LIN ",projects);
@@ -32,15 +36,22 @@ function Projects() {
     setCurrentPage(1);
   };
 
-  const filteredProjects = projects.filter(project => {
+  const filteredProjects = projects?.filter(project => {
+    if (!project || !project.project_name) return false;
+    
     const matchesSearch = project.project_name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || project.project_status === statusFilter;
     const matchesTeam = teamFilter === 'All' || project.category === teamFilter;
     return matchesSearch && matchesStatus && matchesTeam;
-  });
+  }) || [];
 
   const totalPages = Math.ceil(filteredProjects.length / 10);
 
+  const getEmployeeName = (id) => {
+    const employee = employees.find((emp) => emp.id.toString() === id.toString());
+    return employee ? `${employee.first_name} ${employee.last_name}` : "";
+  };
+  
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -59,7 +70,7 @@ function Projects() {
         dispatch(deleteProject(id));
         Swal.fire({
           title: 'Deleted!',
-          text: 'Employee has been deleted.',
+          text: 'Project has been deleted.',
           icon: 'success',
           timer: 2000,
         });
@@ -82,79 +93,95 @@ function Projects() {
             </Link>
           </div>
 
-          <div className="projects-filters">
-            <div className="search-wrapper">
-              <BiSearch className="search-icon" />
-              <input
-                type="search"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={handleSearch}
-              />
-            </div>
-            <div className="filter-buttons">
-              <select 
-                className="filter-select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="All">Status</option>
-                <option value="Active">Active</option>
-                <option value="Completed">Completed</option>
-                <option value="On Hold">On Hold</option>
-              </select>
-              <select 
-                className="filter-select"
-                value={teamFilter}
-                onChange={(e) => setTeamFilter(e.target.value)}
-              >
-                <option value="All">Team</option>
-                <option value="Development">Development</option>
-                <option value="Design">Design</option>
-                <option value="Marketing">Marketing</option>
-              </select>
-            </div>
-          </div>
+          {loading && <div>Loading...</div>}
+          {error && <div>Error: {error}</div>}
+          
+          {!loading && !error && (
+            <>
+              <div className="projects-filters">
+                <div className="search-wrapper">
+                  <BiSearch className="search-icon" />
+                  <input
+                    type="search"
+                    placeholder="Search projects..."
+                    value={searchQuery}
+                    onChange={handleSearch}
+                  />
+                </div>
+                <div className="filter-buttons">
+                  <select 
+                    className="filter-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="All">Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Completed">Completed</option>
+                    <option value="On Hold">On Hold</option>
+                  </select>
+                  <select 
+                    className="filter-select"
+                    value={teamFilter}
+                    onChange={(e) => setTeamFilter(e.target.value)}
+                  >
+                    <option value="All">Team</option>
+                    <option value="Development">Development</option>
+                    <option value="Design">Design</option>
+                    <option value="Marketing">Marketing</option>
+                  </select>
+                </div>
+              </div>
 
-          <div className="projects-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Project Name</th>
-                  <th>Team Lead</th>
-                  <th>Team Size</th>
-                  <th>Project Status</th>
-                  <th>Due Date</th>
-                  <th>Deadline</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              {filteredProjects.map(project => (
-    <tr key={project?.id}>
-      <td>
-        <div className="project-info">
-          <div className="project-name">{project?.project_name}</div>
-        </div>
-      </td>
-      <td>
-        <span>{project?.project_lead}</span>
-      </td>
-      <td>{project?.team_members ? project.team_members.split(',').length : 0}</td>
-      <td>
-        <div className="project-address">{project?.project_status}</div>
-      </td>
-      <td>{project?.start_date}</td>
-      <td>{project?.due_date}</td>
-      <td>
-        <div className="action-buttons">
-          <button className="action-btn edit"><BiEdit /></button>
-          <button className="action-btn delete" onClick={() => handleDelete(project?.id)}><BiTrash /></button>
-        </div>
-      </td>
-    </tr>
-  ))}
-            </table>
-          </div>
+              <div className="projects-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Project Name</th>
+                      <th>Team Lead</th>
+                      <th>Team Size</th>
+                      <th>Project Status</th>
+                      <th>Due Date</th>
+                      <th>Deadline</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProjects.length > 0 ? (
+                      filteredProjects.map(project => (
+                        <tr key={project?.id}>
+                          <td>
+                            <div className="project-info">
+                              <div className="project-name">{project?.project_name}</div>
+                            </div>
+                          </td>
+                          <td>
+                            <span>{getEmployeeName(project.project_lead)}</span>
+                          </td>
+                          <td>{Array.isArray(project?.team_members) ? project.team_members.length : 0}</td>
+
+                          <td>
+                            <div className="project-address">{project?.project_status}</div>
+                          </td>
+                          <td>{project?.start_date}</td>
+                          <td>{project?.due_date}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button className="action-btn edit"><BiEdit /></button>
+                              <button className="action-btn delete" onClick={() => handleDelete(project?.id)}><BiTrash /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" style={{textAlign: 'center'}}>No projects found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           <div className="table-footer">
             <div className="entries-info">
