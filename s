@@ -1630,3 +1630,2517 @@ const TasksOverview = () => {
 };
 
 export default TasksOverview;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "font-awesome/css/font-awesome.min.css";
+import Sidebar from "./Sidebar";
+
+// Chat live
+import { Stack, Grid, TextField, Button, Typography } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+const ChatPage = () => {
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChat, setSelectedChat] = useState("Marketing Team");
+  const messagesEndRef = useRef(null);
+
+  const chats = [
+    {
+      id: 1,
+      name: "Marketing Team",
+      lastMessage: "Sarah: Latest updates on...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      name: "Development Team",
+      lastMessage: "Mike: The new feature is...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 3,
+      name: "Project Discussion",
+      lastMessage: "Anna: Meeting at 4PM",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const messages = [
+    {
+      id: 1,
+      sender: "Sarah Johnson",
+      message: "Hi team! I've just uploaded the latest marketing materials for review.",
+      time: "9:30 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      sender: "You",
+      message: "Thanks Sarah! I'll take a look at them right away.",
+      time: "9:35 AM",
+      position: "right",
+      avatar: "/avatar2.jpg"
+    },
+    {
+      id: 3,
+      sender: "Mike Peters",
+      message: "Could we schedule a quick call to discuss the feedback?",
+      time: "9:40 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+    
+    // Add message handling logic here
+    console.log("Sending message:", message);
+    setMessage("");
+  };
+
+  const filteredChats = chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Chat live
+  const scrollRef = useRef();
+  const [username, setUsername] = useState(null);
+  // const [message, setMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+
+      console.log("Received message:", data); // Debugging log
+
+      setChatMessages((prevMessages) => [...prevMessages, data]);
+    });
+
+    return () => {
+      socket.off("receive_message");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    const data = {
+      username,
+      message,
+      createdDate: new Date().toISOString(),
+    };
+
+    console.log("Sending message:", data); // Debugging log
+
+    socket.emit("send_message", JSON.stringify(data));
+
+    setChatMessages((prevMessages) => [...prevMessages, data]); // Optimistic UI
+    setMessage("");
+  };
+
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <div className="chat-container">
+          <div className="chat-sidebar">
+            <div className="chat-header">
+              <h5>Team Chat</h5>
+              <button className="new-chat-btn">
+                + New Chat
+              </button>
+            </div>
+            
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <i className="fa fa-search"></i>
+            </div>
+
+            <div className="chat-list">
+              {filteredChats.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`chat-item ${selectedChat === chat.name ? 'active' : ''}`}
+                  onClick={() => setSelectedChat(chat.name)}
+                >
+                  <div className="chat-item-avatar">
+                    <img src={chat.avatar} alt={chat.name} />
+                  </div>
+                  <div className="chat-item-info">
+                    <h6>{chat.name}</h6>
+                    <p>{chat.lastMessage}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="chat-main">
+            <div className="chat-messages">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`message ${msg.position === 'right' ? 'message-right' : 'message-left'}`}
+                >
+                  {msg.position === 'left' && (
+                    <div className="message-avatar">
+                      <img src={msg.avatar} alt={msg.sender} />
+                    </div>
+                  )}
+                  <div className="message-content">
+                    <div className="message-sender">{msg.sender}</div>
+                    <div className="message-text">{msg.message}</div>
+                    <div className="message-time">{msg.time}</div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form onSubmit={handleSendMessage} className="chat-input">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit">
+                <i className="fa fa-paper-plane"></i>
+              </button>
+            </form>
+            <form onSubmit={sendMessage}>
+      <Grid
+        container
+        direction="column"
+        alignItems="center"
+        style={{ height: "100vh", width: "100%", padding: 5, marginTop: "100px", position: "fixed" }}
+      >
+        <UsernameDialog username={username} setUsername={setUsername} />
+
+        <Stack
+          spacing={1}
+          sx={{
+            backgroundColor: "#fff",
+            height: "80vh",
+            width: "90%",
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Grid container item padding={3}>
+            <Grid item>Welcome {username}</Grid>
+          </Grid>
+
+          <Stack ref={scrollRef} direction="column" spacing={3} px={2} sx={{ flex: 1, overflowY: "auto" }}>
+            {chatMessages.map(({ username: sender, message, createdDate }, index) => {
+              const self = sender === username;
+
+              return (
+                <Grid
+                  key={index}
+                  item
+                  sx={{
+                    alignSelf: self ? "flex-end" : "flex-start",
+                    maxWidth: "50%",
+                  }}
+                >
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {sender}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      backgroundColor: self ? "#90caf9" : "#e0e0e0",
+                      borderRadius: 2,
+                      padding: "5px",
+                    }}
+                    px={1}
+                  >
+                    {message}
+                  </Typography>
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {format(new Date(createdDate), "hh:mm a")}
+                  </Typography>
+                </Grid>
+              );
+            })}
+          </Stack>
+
+          <Grid container item padding={3} alignItems="center">
+            <Grid item flex={1}>
+              <TextField
+                autoFocus
+                variant="standard"
+                fullWidth
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                sx={{
+                  border: "1px solid gray",
+                  borderRadius: 1,
+                  paddingLeft: 2,
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                }}
+              />
+            </Grid>
+            <Grid item>
+              <Button type="submit">Send</Button>
+            </Grid>
+          </Grid>
+        </Stack>
+      </Grid>
+    </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "font-awesome/css/font-awesome.min.css";
+import Sidebar from "./Sidebar";
+import { Stack, Grid, TextField, Button, Typography } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+
+const socket = io("http://localhost:5173/");
+
+const ChatPage = () => {
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChat, setSelectedChat] = useState("Marketing Team");
+  const [username, setUsername] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    socket.on("receive_message", (data) => {
+      setChatMessages((prev) => [...prev, JSON.parse(data)]);
+    });
+
+    return () => socket.off("receive_message");
+  }, []);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    const data = {
+      username,
+      message,
+      createdDate: new Date().toISOString(),
+    };
+
+    socket.emit("send_message", JSON.stringify(data));
+    setChatMessages((prev) => [...prev, data]);
+    setMessage("");
+  };
+
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <Grid container direction="column" alignItems="center" sx={{ padding: 3 }}>
+          <UsernameDialog username={username} setUsername={setUsername} />
+
+          <Stack sx={{ width: "100%", maxWidth: "800px", height: "80vh", border: "1px solid #ddd", borderRadius: 2, overflow: "hidden" }}>
+            <Typography variant="h6" sx={{ p: 2, borderBottom: "1px solid #ddd" }}>
+              Chat - {selectedChat}
+            </Typography>
+
+            <Stack sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+              {chatMessages.map((msg, idx) => (
+                <Stack key={idx} alignSelf={msg.username === username ? "flex-end" : "flex-start"} sx={{ mb: 1 }}>
+                  <Typography variant="caption">{msg.username}</Typography>
+                  <Typography variant="body2" sx={{ bgcolor: msg.username === username ? "#90caf9" : "#e0e0e0", p: 1, borderRadius: 1 }}>
+                    {msg.message}
+                  </Typography>
+                  <Typography variant="caption">
+                    {format(new Date(msg.createdDate), "hh:mm a")}
+                  </Typography>
+                </Stack>
+              ))}
+              <div ref={scrollRef} />
+            </Stack>
+
+            <form onSubmit={sendMessage}>
+              <Grid container spacing={1} alignItems="center" sx={{ p: 2, borderTop: "1px solid #ddd" }}>
+                <Grid item xs={10}>
+                  <TextField
+                    fullWidth
+                    placeholder="Type your message..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={2}>
+                  <Button type="submit" variant="contained" fullWidth>
+                    Send
+                  </Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Stack>
+        </Grid>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import Sidebar from "./Sidebar";
+import { Grid, TextField, Button, Typography, Stack } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+
+const socket = io("http://localhost:5173/");
+
+const ChatPage = () => {
+  const [username, setUsername] = useState(null);
+  const [message, setMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+      setChatMessages((prev) => [...prev, data]);
+    });
+
+    return () => socket.off("receive_message");
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim() || !username) return;
+
+    const data = {
+      username,
+      message,
+      createdDate: new Date().toISOString(),
+    };
+
+    socket.emit("send_message", JSON.stringify(data));
+    setChatMessages((prev) => [...prev, data]);
+    setMessage("");
+  };
+
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <Grid container direction="column" alignItems="center" sx={{ padding: 3 }}>
+          <UsernameDialog username={username} setUsername={setUsername} />
+
+          <Stack
+            spacing={2}
+            sx={{
+              width: "100%",
+              height: "80vh",
+              backgroundColor: "#f7f7f7",
+              borderRadius: 2,
+              overflowY: "auto",
+              padding: 2,
+            }}
+          >
+            {chatMessages.map((msg, index) => (
+              <Stack
+                key={index}
+                direction="column"
+                alignSelf={msg.username === username ? "flex-end" : "flex-start"}
+                sx={{ maxWidth: "60%" }}
+              >
+                <Typography variant="caption" textAlign={msg.username === username ? "right" : "left"}>
+                  {msg.username}
+                </Typography>
+                <Typography
+                  sx={{
+                    backgroundColor: msg.username === username ? "#90caf9" : "#e0e0e0",
+                    padding: 1,
+                    borderRadius: 2,
+                  }}
+                >
+                  {msg.message}
+                </Typography>
+                <Typography variant="caption" textAlign={msg.username === username ? "right" : "left"}>
+                  {format(new Date(msg.createdDate), "hh:mm a")}
+                </Typography>
+              </Stack>
+            ))}
+            <div ref={messagesEndRef} />
+          </Stack>
+
+          <form onSubmit={sendMessage} style={{ width: "100%", marginTop: 10 }}>
+            <Grid container spacing={1} alignItems="center">
+              <Grid item xs={10}>
+                <TextField
+                  fullWidth
+                  placeholder="Type your message..."
+                  variant="outlined"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={2}>
+                <Button type="submit" variant="contained" fullWidth>
+                  Send
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Grid>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import Sidebar from "./Sidebar";
+import { Grid, TextField, Button, Typography, Stack } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+
+const socket = io("http://localhost:5173/");
+
+const ChatPage = () => {
+  const [username, setUsername] = useState(null);
+  const [message, setMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+      setChatMessages((prev) => [...prev, data]);
+    });
+
+    return () => socket.off("receive_message");
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim() || !username) return;
+
+    const data = {
+      username,
+      message,
+      createdDate: new Date().toISOString(),
+    };
+
+    socket.emit("send_message", JSON.stringify(data));
+    setChatMessages((prev) => [...prev, data]);
+    setMessage("");
+  };
+
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <Grid container direction="column" alignItems="center" sx={{ padding: 3 }}>
+          <UsernameDialog username={username} setUsername={setUsername} />
+
+          <Stack
+            spacing={2}
+            sx={{
+              width: "100%",
+              height: "80vh",
+              backgroundColor: "#f7f7f7",
+              borderRadius: 2,
+              overflowY: "auto",
+              padding: 2,
+            }}
+          >
+            {chatMessages.map((msg, index) => (
+              <Stack
+                key={index}
+                direction="column"
+                alignSelf={msg.username === username ? "flex-end" : "flex-start"}
+                sx={{ maxWidth: "60%" }}
+              >
+                <Typography variant="caption" textAlign={msg.username === username ? "right" : "left"}>
+                  {msg.username}
+                </Typography>
+                <Typography
+                  sx={{
+                    backgroundColor: msg.username === username ? "#90caf9" : "#e0e0e0",
+                    padding: 1,
+                    borderRadius: 2,
+                  }}
+                >
+                  {msg.message}
+                </Typography>
+                <Typography variant="caption" textAlign={msg.username === username ? "right" : "left"}>
+                  {format(new Date(msg.createdDate), "hh:mm a")}
+                </Typography>
+              </Stack>
+            ))}
+            <div ref={messagesEndRef} />
+          </Stack>
+
+          <form onSubmit={sendMessage} style={{ width: "100%", marginTop: 10 }}>
+            <Grid container spacing={1} alignItems="center">
+              <Grid item xs={10}>
+                <TextField
+                  fullWidth
+                  placeholder="Type your message..."
+                  variant="outlined"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={2}>
+                <Button type="submit" variant="contained" fullWidth>
+                  Send
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Grid>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "font-awesome/css/font-awesome.min.css";
+import Sidebar from "./Sidebar";
+
+// Chat live
+import { Stack, Grid, TextField, Button, Typography } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+const socket = io("http://localhost:5173/"); // Make sure this URL is correct
+
+const ChatPage = () => {
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChat, setSelectedChat] = useState("Marketing Team");
+  const messagesEndRef = useRef(null);
+
+  const chats = [
+    {
+      id: 1,
+      name: "Marketing Team",
+      lastMessage: "Sarah: Latest updates on...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      name: "Development Team",
+      lastMessage: "Mike: The new feature is...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 3,
+      name: "Project Discussion",
+      lastMessage: "Anna: Meeting at 4PM",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const messages = [
+    {
+      id: 1,
+      sender: "Sarah Johnson",
+      message: "Hi team! I've just uploaded the latest marketing materials for review.",
+      time: "9:30 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      sender: "You",
+      message: "Thanks Sarah! I'll take a look at them right away.",
+      time: "9:35 AM",
+      position: "right",
+      avatar: "/avatar2.jpg"
+    },
+    {
+      id: 3,
+      sender: "Mike Peters",
+      message: "Could we schedule a quick call to discuss the feedback?",
+      time: "9:40 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+    
+    // Add message handling logic here
+    console.log("Sending message:", message);
+    setMessage("");
+  };
+
+  const filteredChats = chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+
+  // Chat Live
+  const scrollRef = useRef();
+  const [username, setUsername] = useState(null);
+  // const [message, setMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+
+      console.log("Received message:", data); // Debugging log
+
+      setChatMessages((prevMessages) => [...prevMessages, data]);
+    });
+
+    return () => {
+      socket.off("receive_message");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    const data = {
+      username,
+      message,
+      createdDate: new Date().toISOString(),
+    };
+
+    console.log("Sending message:", data); // Debugging log
+
+    socket.emit("send_message", JSON.stringify(data));
+
+    setChatMessages((prevMessages) => [...prevMessages, data]); // Optimistic UI
+    setMessage("");
+  };
+
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <div className="chat-container">
+          <div className="chat-sidebar">
+            <div className="chat-header">
+              <h5>Team Chat</h5>
+              <button className="new-chat-btn">
+                + New Chat
+              </button>
+            </div>
+            
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <i className="fa fa-search"></i>
+            </div>
+
+            <div className="chat-list">
+              {filteredChats.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`chat-item ${selectedChat === chat.name ? 'active' : ''}`}
+                  onClick={() => setSelectedChat(chat.name)}
+                >
+                  <div className="chat-item-avatar">
+                    <img src={chat.avatar} alt={chat.name} />
+                  </div>
+                  <div className="chat-item-info">
+                    <h6>{chat.name}</h6>
+                    <p>{chat.lastMessage}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="chat-main">
+          <div className="chat-messages">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`message ${msg.position === "right" ? "message-right" : "message-left"}`}
+                >
+                  <div className="message-avatar">
+                    <img src={msg.avatar} alt={msg.sender} />
+                  </div>
+                  <div className="message-content">
+                    <div className="message-sender">{msg.sender}</div>
+                    <div className="message-text">{msg.message}</div>
+                    <div className="message-time">{msg.time}</div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+
+            <form onSubmit={handleSendMessage} className="chat-input">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit">
+                <i className="fa fa-paper-plane"></i>
+              </button>
+            </form>
+            <form onSubmit={sendMessage}>
+      <Grid
+        container
+        direction="column"
+        alignItems="center"
+        style={{ height: "100vh", width: "100%", padding: 5, marginTop: "100px", position: "fixed" }}
+      >
+        <UsernameDialog username={username} setUsername={setUsername} />
+
+        <Stack
+          spacing={1}
+          sx={{
+            backgroundColor: "#fff",
+            height: "80vh",
+            width: "90%",
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Grid container item padding={3}>
+            <Grid item>Welcome {username}</Grid>
+          </Grid>
+
+          <Stack ref={scrollRef} direction="column" spacing={3} px={2} sx={{ flex: 1, overflowY: "auto" }}>
+            {chatMessages.map(({ username: sender, message, createdDate }, index) => {
+              const self = sender === username;
+
+              return (
+                <Grid
+                  key={index}
+                  item
+                  sx={{
+                    alignSelf: self ? "flex-end" : "flex-start",
+                    maxWidth: "50%",
+                  }}
+                >
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {sender}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      backgroundColor: self ? "#90caf9" : "#e0e0e0",
+                      borderRadius: 2,
+                      padding: "5px",
+                    }}
+                    px={1}
+                  >
+                    {message}
+                  </Typography>
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {format(new Date(createdDate), "hh:mm a")}
+                  </Typography>
+                </Grid>
+              );
+            })}
+          </Stack>
+
+          <Grid container item padding={3} alignItems="center">
+            <Grid item flex={1}>
+              <TextField
+                autoFocus
+                variant="standard"
+                fullWidth
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                sx={{
+                  border: "1px solid gray",
+                  borderRadius: 1,
+                  paddingLeft: 2,
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={2}>
+            <Button type="submit" variant="contained" fullWidth>
+              <Button type="submit">Send</Button>
+              </Button>
+                    </Grid>
+          </Grid>
+        </Stack>
+      </Grid>
+    </form>
+          </div>
+        </div>
+      </div>
+
+       <div className="dashboard-wrapper d-flex">
+            <Sidebar />
+            <div className="main-content flex-grow-1">
+              <Grid container direction="column" alignItems="center" sx={{ padding: 3 }}>
+                <UsernameDialog username={username} setUsername={setUsername} />
+      
+                <Stack
+                  spacing={2}
+                  sx={{
+                    width: "100%",
+                    height: "80vh",
+                    backgroundColor: "#f7f7f7",
+                    borderRadius: 2,
+                    overflowY: "auto",
+                    padding: 2,
+                  }}
+                >
+                  {chatMessages.map((msg, index) => (
+                    <Stack
+                      key={index}
+                      direction="column"
+                      alignSelf={msg.username === username ? "flex-end" : "flex-start"}
+                      sx={{ maxWidth: "60%" }}
+                    >
+                      <Typography variant="caption" textAlign={msg.username === username ? "right" : "left"}>
+                        {msg.username}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          backgroundColor: msg.username === username ? "#90caf9" : "#e0e0e0",
+                          padding: 1,
+                          borderRadius: 2,
+                        }}
+                      >
+                        {msg.message}
+                      </Typography>
+                      <Typography variant="caption" textAlign={msg.username === username ? "right" : "left"}>
+                        {format(new Date(msg.createdDate), "hh:mm a")}
+                      </Typography>
+                    </Stack>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </Stack>
+      
+                <form onSubmit={sendMessage} style={{ width: "100%", marginTop: 10 }}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Grid item xs={10}>
+                      <TextField
+                        fullWidth
+                        placeholder="Type your message..."
+                        variant="outlined"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={2}>
+                      <Button type="submit" variant="contained" fullWidth>
+                        Send
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </form>
+              </Grid>
+            </div>
+          </div>
+    </div>
+  );
+};
+
+export default ChatPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "font-awesome/css/font-awesome.min.css";
+import Sidebar from "./Sidebar";
+
+// Chat live
+import { Stack, Grid, TextField, Button, Typography } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+const socket = io("http://localhost:5173/"); // Make sure this URL is correct
+
+const ChatPage = () => {
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChat, setSelectedChat] = useState("Marketing Team");
+  const messagesEndRef = useRef(null);
+
+  const chats = [
+    {
+      id: 1,
+      name: "Marketing Team",
+      lastMessage: "Sarah: Latest updates on...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      name: "Development Team",
+      lastMessage: "Mike: The new feature is...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 3,
+      name: "Project Discussion",
+      lastMessage: "Anna: Meeting at 4PM",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const messages = [
+    {
+      id: 1,
+      sender: "Sarah Johnson",
+      message: "Hi team! I've just uploaded the latest marketing materials for review.",
+      time: "9:30 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      sender: "You",
+      message: "Thanks Sarah! I'll take a look at them right away.",
+      time: "9:35 AM",
+      position: "right",
+      avatar: "/avatar2.jpg"
+    },
+    {
+      id: 3,
+      sender: "Mike Peters",
+      message: "Could we schedule a quick call to discuss the feedback?",
+      time: "9:40 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Remove handleSendMessage since we're using socket-based sendMessage
+  const filteredChats = chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+
+  // Chat Live
+  const scrollRef = useRef();
+  const [username, setUsername] = useState(null);
+  // const [message, setMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+
+      console.log("Received message:", data); // Debugging log
+
+      setChatMessages((prevMessages) => [...prevMessages, data]);
+    });
+
+    return () => {
+      socket.off("receive_message");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    const data = {
+      username,
+      message,
+      createdDate: new Date().toISOString(),
+    };
+
+    console.log("Sending message:", data); // Debugging log
+
+    socket.emit("send_message", JSON.stringify(data));
+
+    setChatMessages((prevMessages) => [...prevMessages, data]); // Optimistic UI
+    setMessage("");
+  };
+
+
+  // user api
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [profiledata, setProfileData]=useState({})
+  
+    useEffect(()=>{
+     const data= localStorage.getItem("user")
+     if(data){
+       setProfileData(JSON.parse(data))
+     }else{
+      setProfileData("")
+     }
+    },[])
+    console.log(profiledata.first_name);
+    
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <div className="chat-container">
+          <div className="chat-sidebar">
+            <div className="chat-header">
+              <h5>Team Chat</h5>
+              <button className="new-chat-btn">
+                + New Chat
+              </button>
+            </div>
+            
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <i className="fa fa-search"></i>
+            </div>
+
+            <div className="chat-list">
+              {filteredChats.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`chat-item ${selectedChat === chat.name ? 'active' : ''}`}
+                  onClick={() => setSelectedChat(chat.name)}
+                >
+                  <div className="chat-item-avatar">
+                    <img src={chat.avatar} alt={chat.name} />
+                  </div>
+                  <div className="chat-item-info">
+                    <h6>{chat.name}</h6>
+                    <p>{chat.lastMessage}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="chat-main">
+          <div className="chat-messages">
+              {chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${msg.username === username ? 'message-right' : 'message-left'}`}
+                >
+                  <div className="message-avatar">
+                    <img src={msg.avatar || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s'} alt={msg.username} />
+                  </div>
+                  <div className="message-content">
+                    <div className="message-sender">{msg.username}</div>
+                    <div className="message-text">{msg.message}</div>
+                    <div className="message-time">{format(new Date(msg.createdDate), 'hh:mm a')}</div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+
+            <form onSubmit={sendMessage} className="chat-input">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit">
+                <i className="fa fa-paper-plane"></i>
+              </button>
+            </form>
+            <form onSubmit={sendMessage} className="chat-input">
+      <Grid
+        container
+        direction="column"
+        alignItems="center"
+        style={{ height: "100vh", width: "100%", padding: 5, marginTop: "100px", position: "fixed" }}
+      >
+        <UsernameDialog username={profiledata} setUsername={profiledata} />
+
+        <Stack
+          spacing={1}
+          sx={{
+            backgroundColor: "#fff",
+            height: "80vh",
+            width: "90%",
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Grid container item padding={3}>
+            <Grid item>Welcome {username}</Grid>
+          </Grid>
+
+          <Stack ref={scrollRef} direction="column" spacing={3} px={2} sx={{ flex: 1, overflowY: "auto" }}>
+            {chatMessages.map(({ username: sender, message, createdDate }, index) => {
+              const self = sender === username;
+
+              return (
+                <Grid
+                  key={index}
+                  item
+                  sx={{
+                    alignSelf: self ? "flex-end" : "flex-start",
+                    maxWidth: "50%",
+                  }}
+                >
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {sender}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      backgroundColor: self ? "#90caf9" : "#e0e0e0",
+                      borderRadius: 2,
+                      padding: "5px",
+                    }}
+                    px={1}
+                  >
+                    {message}
+                  </Typography>
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {format(new Date(createdDate), "hh:mm a")}
+                  </Typography>
+                </Grid>
+              );
+            })}
+          </Stack>
+
+          <Grid container item padding={3} alignItems="center">
+            <Grid item flex={1}>
+              <TextField
+                autoFocus
+                variant="standard"
+                fullWidth
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                sx={{
+                  border: "1px solid gray",
+                  borderRadius: 1,
+                  paddingLeft: 2,
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={2}>
+            <Button type="submit" variant="contained" fullWidth>
+              <Button type="submit">Send</Button>
+              </Button>
+                    </Grid>
+          </Grid>
+        </Stack>
+      </Grid>
+    </form>
+          </div>
+        </div>
+      </div>
+
+    
+    </div>
+  );
+};
+
+export default ChatPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "font-awesome/css/font-awesome.min.css";
+import Sidebar from "./Sidebar";
+
+// Chat live
+import { Stack, Grid, TextField, Button, Typography } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+import { ChatAll } from "../features/Chats/ChatsSlice";
+import { useDispatch, useSelector } from "react-redux";
+const socket = io("http://localhost:5173/"); // Make sure this URL is correct
+
+const ChatPage = () => {
+  const dispatch =useDispatch()
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChat, setSelectedChat] = useState("Marketing Team");
+  const messagesEndRef = useRef(null);
+
+  const chats = [
+    {
+      id: 1,
+      name: "Marketing Team",
+      lastMessage: "Sarah: Latest updates on...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      name: "Development Team",
+      lastMessage: "Mike: The new feature is...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 3,
+      name: "Project Discussion",
+      lastMessage: "Anna: Meeting at 4PM",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const messages = [
+    {
+      id: 1,
+      sender: "Sarah Johnson",
+      message: "Hi team! I've just uploaded the latest marketing materials for review.",
+      time: "9:30 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      sender: "You",
+      message: "Thanks Sarah! I'll take a look at them right away.",
+      time: "9:35 AM",
+      position: "right",
+      avatar: "/avatar2.jpg"
+    },
+    {
+      id: 3,
+      sender: "Mike Peters",
+      message: "Could we schedule a quick call to discuss the feedback?",
+      time: "9:40 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+  const filteredChats = chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  // Chat Live
+  const scrollRef = useRef();
+  const [username, setUsername] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+      console.log("Received message:", data); 
+      setChatMessages((prevMessages) => [...prevMessages, data]);
+    });
+    return () => {
+      socket.off("receive_message");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    const data = {
+      username,
+      message,
+      createdDate: new Date().toISOString(),
+    };
+    console.log("Sending message:", data); 
+    socket.emit("send_message", JSON.stringify(data));
+
+    setChatMessages((prevMessages) => [...prevMessages, data]); // Optimistic UI
+    setMessage("");
+  };
+
+
+  // user api
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [profiledata, setProfileData]=useState({})
+  
+    useEffect(()=>{
+     const data= localStorage.getItem("user")
+     if(data){
+       setProfileData(JSON.parse(data))
+       console.log(data);
+       
+     }else{
+      setProfileData("")
+     }
+    },[])
+    console.log(profiledata.first_name);
+    
+    // chat all
+        const { chatsArr } = useSelector((state) => state.chats);
+        console.log(chatsArr);
+        
+      useEffect(() => {
+        dispatch(ChatAll());
+      }, [dispatch]);
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <div className="chat-container">
+          <div className="chat-sidebar">
+            <div className="chat-header">
+              <h5>Team Chat</h5>
+              <button className="new-chat-btn">
+                + New Chat
+              </button>
+            </div>
+            
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <i className="fa fa-search"></i>
+            </div>
+
+            <div className="chat-list">
+              {filteredChats.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`chat-item ${selectedChat === chat.name ? 'active' : ''}`}
+                  onClick={() => setSelectedChat(chat.name)}
+                >
+                  <div className="chat-item-avatar">
+                    <img src={chat.avatar} alt={chat.name} />
+                  </div>
+                  <div className="chat-item-info">
+                    <h6>{chat.name}</h6>
+                    <p>{chat.lastMessage}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="chat-main">
+          <div className="chat-messages">
+              {chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${msg.username === username ? 'message-right' : 'message-left'}`}
+                >
+                  <div className="message-avatar">
+                    <img src={msg.avatar || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s'} alt={msg.username} />
+                  </div>
+                  <div className="message-content">
+                    <div className="message-sender">{msg.username}</div>
+                    <div className="message-text">{msg.message}</div>
+                    <div className="message-time">{format(new Date(msg.createdDate), 'hh:mm a')}</div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+
+            <form onSubmit={sendMessage} className="chat-input">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit">
+                <i className="fa fa-paper-plane"></i>
+              </button>
+            </form>
+            <form onSubmit={sendMessage} className="chat-input">
+      <Grid
+        container
+        direction="column"
+        alignItems="center"
+        style={{ height: "100vh", width: "100%", padding: 5, marginTop: "100px", position: "fixed" }}
+      >
+        <UsernameDialog username={profiledata} setUsername={profiledata} />
+
+        <Stack
+          spacing={1}
+          sx={{
+            backgroundColor: "#fff",
+            height: "80vh",
+            width: "90%",
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Grid container item padding={3}>
+            <Grid item>Welcome {username}</Grid>
+          </Grid>
+
+          <Stack ref={scrollRef} direction="column" spacing={3} px={2} sx={{ flex: 1, overflowY: "auto" }}>
+            {chatMessages.map(({ username: sender, message, createdDate }, index) => {
+              const self = sender === username;
+
+              return (
+                <Grid
+                  key={index}
+                  item
+                  sx={{
+                    alignSelf: self ? "flex-end" : "flex-start",
+                    maxWidth: "50%",
+                  }}
+                >
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {sender}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      backgroundColor: self ? "#90caf9" : "#e0e0e0",
+                      borderRadius: 2,
+                      padding: "5px",
+                    }}
+                    px={1}
+                  >
+                    {message}
+                  </Typography>
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {format(new Date(createdDate), "hh:mm a")}
+                  </Typography>
+                </Grid>
+              );
+            })}
+          </Stack>
+
+          <Grid container item padding={3} alignItems="center">
+            <Grid item flex={1}>
+              <TextField
+                autoFocus
+                variant="standard"
+                fullWidth
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                sx={{
+                  border: "1px solid gray",
+                  borderRadius: 1,
+                  paddingLeft: 2,
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={2}>
+            <Button type="submit" variant="contained" fullWidth>
+              <Button type="submit">Send</Button>
+              </Button>
+                    </Grid>
+          </Grid>
+        </Stack>
+      </Grid>
+    </form>
+          </div>
+        </div>
+      </div>
+
+    
+    </div>
+  );
+};
+
+export default ChatPage; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "font-awesome/css/font-awesome.min.css";
+import Sidebar from "./Sidebar";
+
+// Chat live
+import { Stack, Grid, TextField, Button, Typography } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+import { ChatAll, chats_Creat, UserAll } from "../features/Chats/ChatsSlice";
+import { useDispatch, useSelector } from "react-redux";
+const socket = io("http://localhost:5173/"); // Make sure this URL is correct
+
+const ChatPage = () => {
+  const dispatch =useDispatch()
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChat, setSelectedChat] = useState("Marketing Team");
+  const messagesEndRef = useRef(null);
+
+  const chats = [
+    {
+      id: 1,
+      name: "Marketing Team",
+      lastMessage: "Sarah: Latest updates on...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      name: "Development Team",
+      lastMessage: "Mike: The new feature is...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 3,
+      name: "Project Discussion",
+      lastMessage: "Anna: Meeting at 4PM",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const messages = [
+    {
+      id: 1,
+      sender: "Sarah Johnson",
+      message: "Hi team! I've just uploaded the latest marketing materials for review.",
+      time: "9:30 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      sender: "You",
+      message: "Thanks Sarah! I'll take a look at them right away.",
+      time: "9:35 AM",
+      position: "right",
+      avatar: "/avatar2.jpg"
+    },
+    {
+      id: 3,
+      sender: "Mike Peters",
+      message: "Could we schedule a quick call to discuss the feedback?",
+      time: "9:40 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+  const filteredChats = chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Chat Live
+  const scrollRef = useRef();
+  const [username, setUsername] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+      const formattedData = {
+        username: data.username,
+        content: data.content,
+        timestamp: data.timestamp,
+   
+      };
+   
+      
+      setChatMessages((prevMessages) => [...prevMessages, data]);
+    });
+    return () => {
+      socket.off("receive_message");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    const data = {
+      username,
+      content: message,
+      timestamp: new Date().toISOString(),
+      
+    };
+    console.log('Sending message data:', data);
+    dispatch(chats_Creat(data))
+    socket.emit("send_message", JSON.stringify(data));
+    setChatMessages((prevMessages) => [...prevMessages, data]); 
+    setMessage("");
+  };
+
+  // user api
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [profiledata, setProfileData]=useState({})
+  
+    useEffect(()=>{
+     const data= localStorage.getItem("user")
+     if(data){
+      //  setProfileData(JSON.parse(data))
+      //  console.log(data);
+        }else{
+      setProfileData("")
+     }
+    },[])
+    
+    // UserAll all
+        const { AllUser } = useSelector((state) => state.chats);
+        console.log(AllUser);
+        
+      useEffect(() => {
+        dispatch(UserAll());
+      }, [dispatch]);
+
+
+
+         // chat all
+      //   const { chatsArr } = useSelector((state) => state.chats);
+      //   console.log(chatsArr);
+        
+      // useEffect(() => {
+      //   dispatch(ChatAll());
+      // }, [dispatch]);
+      
+      const selectUser = (id)=>{
+        dispatch(ChatAll(id));
+      }
+
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <div className="chat-container">
+          <div className="chat-sidebar">
+            <div className="chat-header">
+              <h5>Team Chat</h5>
+              <button className="new-chat-btn">
+                + New Chat
+              </button>
+            </div>
+            
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <i className="fa fa-search"></i>
+            </div>
+
+            <div className="chat-list">
+              {AllUser?.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`chat-item ${selectedChat === chat.name ? 'active' : ''}`}
+                  // onClick={() => setSelectedChat(chat.name)}
+                  onClick={() => selectUser(chat.id)}
+                >
+                  <div className="chat-item-avatar">
+                    {/* <img src={chat.avatar} alt={chat.name} /> */}
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s" alt="" />
+                  </div>
+                  <div className="chat-item-info">
+                    <h6>{chat.first_name}</h6>
+                    <p>{chat.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="chat-main">
+          <div className="chat-messages">
+              {chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${msg.username === username ? 'message-right' : 'message-left'}`}
+                >
+                  <div className="message-avatar">
+                    <img src={msg.avatar || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s'} alt={msg.username} />
+                  </div>
+                  <div className="message-content">
+                    <div className="message-sender">{msg.username}</div>
+                    <div className="message-text">{msg.content}</div>
+                    <div className="message-time">{format(new Date(msg.timestamp), 'hh:mm a')}</div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div> 
+            <form onSubmit={sendMessage} className="chat-input">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit">
+                <i className="fa fa-paper-plane"></i>
+              </button>
+            </form>
+            <form onSubmit={sendMessage} className="chat-input">
+      <Grid
+        container
+        direction="column"
+        alignItems="center"
+        style={{ height: "100vh", width: "100%", padding: 5, marginTop: "100px", position: "fixed" }}
+      >
+        <UsernameDialog username={profiledata} setUsername={profiledata} />
+        <Stack                                                 
+          spacing={1}
+          sx={{
+            backgroundColor: "#fff",
+            height: "80vh",
+            width: "90%",
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Grid container item padding={3}>
+            <Grid item>Welcome {username}</Grid>
+          </Grid>
+
+          <Stack ref={scrollRef} direction="column" spacing={3} px={2} sx={{ flex: 1, overflowY: "auto" }}>
+            {chatMessages.map(({ username: sender, content, timestamp }, index) => {
+              const self = sender === username;
+
+              return (
+                <Grid
+                  key={index}
+                  item
+                  sx={{
+                    alignSelf: self ? "flex-end" : "flex-start",
+                    maxWidth: "50%",
+                  }}
+                >
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {sender}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      backgroundColor: self ? "#90caf9" : "#e0e0e0",
+                      borderRadius: 2,
+                      padding: "5px",
+                    }}
+                    px={1}
+                  >
+                    {content}
+                  </Typography>
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {format(new Date(timestamp), "hh:mm a")}
+                  </Typography>
+                </Grid>
+              );
+            })}
+          </Stack>
+
+          <Grid container item padding={3} alignItems="center">
+            <Grid item flex={1}>
+              <TextField
+                autoFocus
+                variant="standard"
+                fullWidth
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                sx={{
+                  border: "1px solid gray",
+                  borderRadius: 1,
+                  paddingLeft: 2,
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={2}>
+            <Button type="submit" variant="contained" fullWidth>
+              <Button type="submit">Send</Button>
+              </Button>
+                    </Grid>
+          </Grid>
+        </Stack>
+      </Grid>
+    </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
+
+
+
+
+import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "font-awesome/css/font-awesome.min.css";
+import Sidebar from "./Sidebar";
+
+// Chat live
+import { Stack, Grid, TextField, Button, Typography } from "@mui/material";
+import io from "socket.io-client";
+import { format } from "date-fns";
+import UsernameDialog from "./UsernameDialog";
+import { ChatAll, chats_Creat, UserAll } from "../features/Chats/ChatsSlice";
+import { useDispatch, useSelector } from "react-redux";
+const socket = io("http://localhost:5173/"); // Make sure this URL is correct
+
+const ChatPage = () => {
+  const dispatch = useDispatch()
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChat, setSelectedChat] = useState("Marketing Team");
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const messagesEndRef = useRef(null);
+
+  const chats = [
+    {
+      id: 1,
+      name: "Marketing Team",
+      lastMessage: "Sarah: Latest updates on...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      name: "Development Team",
+      lastMessage: "Mike: The new feature is...",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 3,
+      name: "Project Discussion",
+      lastMessage: "Anna: Meeting at 4PM",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const messages = [
+    {
+      id: 1,
+      sender: "Sarah Johnson",
+      message: "Hi team! I've just uploaded the latest marketing materials for review.",
+      time: "9:30 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    },
+    {
+      id: 2,
+      sender: "You",
+      message: "Thanks Sarah! I'll take a look at them right away.",
+      time: "9:35 AM",
+      position: "right",
+      avatar: "/avatar2.jpg"
+    },
+    {
+      id: 3,
+      sender: "Mike Peters",
+      message: "Could we schedule a quick call to discuss the feedback?",
+      time: "9:40 AM",
+      position: "left",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s"
+    }
+  ];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+  const filteredChats = chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Chat Live
+  const scrollRef = useRef();
+  const [username, setUsername] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+
+  useEffect(() => {
+    socket.on("receive_message", (e) => {
+      const data = JSON.parse(e);
+      const formattedData = {
+        username: data.username,
+        content: data.content,
+        timestamp: data.timestamp,
+   
+      };
+      setChatMessages((prevMessages) => [...prevMessages, data]);
+    });
+    return () => {
+      socket.off("receive_message");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim() || !selectedUserId) return;
+
+    const data = {
+      username,
+      content: message,
+      timestamp: new Date().toISOString(),
+      receiverId: selectedUserId
+    };
+    dispatch(chats_Creat(data))
+    socket.emit("send_message", JSON.stringify(data));
+    setChatMessages((prevMessages) => [...prevMessages, data]); 
+    setMessage("");
+  };
+
+  // user api
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [profiledata, setProfileData]=useState({})
+  
+    useEffect(()=>{
+     const data= localStorage.getItem("user")
+     if(data){
+      //  setProfileData(JSON.parse(data))
+      //  console.log(data);
+        }else{
+      setProfileData("")
+     }
+    },[])
+    
+    // UserAll all
+        const { AllUser } = useSelector((state) => state.chats);
+        console.log(AllUser);        
+      useEffect(() => {
+        dispatch(UserAll());
+      }, [dispatch]);
+
+
+         // chat all
+        const { chatsArr } = useSelector((state) => state.chats);
+        // console.log(chatsArr);
+      useEffect(() => {
+        dispatch(ChatAll());
+      }, [dispatch]);
+
+      const selectUser = (id) => {
+    setSelectedUserId(id);
+    dispatch(ChatAll(id));
+  }
+
+  return (
+    <div className="dashboard-wrapper d-flex">
+      <Sidebar />
+      <div className="main-content flex-grow-1">
+        <div className="chat-container">
+          <div className="chat-sidebar">
+            <div className="chat-header">
+              <h5>Team Chat</h5>
+              <button className="new-chat-btn">
+                + New Chat
+              </button>
+            </div>
+            
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <i className="fa fa-search"></i>
+            </div>
+
+            <div className="chat-list">
+              {AllUser?.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`chat-item ${selectedChat === chat.name ? 'active' : ''}`}
+                  // onClick={() => setSelectedChat(chat.name)}
+                  onClick={() => selectUser(chat.id)}
+                >
+                  <div className="chat-item-avatar">
+                    {/* <img src={chat.avatar} alt={chat.name} /> */}
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s" alt="" />
+                  </div>
+                  <div className="chat-item-info">
+                    <h6>{chat.first_name}</h6>
+                    <p>{chat.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="chat-main">
+          <div className="chat-messages">
+              {chatsArr.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${msg.username === username ? 'message-right' : 'message-left'}`}
+                >
+                  <div className="message-avatar">
+                    <img src={msg.avatar || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s'} alt={msg.username} />
+                  </div>
+                  <div className="message-content">
+                    <div className="message-sender">{msg.username}</div>
+                    <div className="message-text">{msg.content}</div>
+                    {/* <div className="message-time">{format(new Date(msg.timestamp), 'hh:mm a')}</div> */}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div> 
+
+          <div className="chat-messages">
+              {chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${msg.username === username ? 'message-right' : 'message-left'}`}
+                >
+                  <div className="message-avatar">
+                    <img src={msg.avatar || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLe5PABjXc17cjIMOibECLM7ppDwMmiDg6Dw&s'} alt={msg.username} />
+                  </div>
+                  <div className="message-content">
+                    <div className="message-sender">{msg.username}</div>
+                    <div className="message-text">{msg.content}</div>
+                    <div className="message-time">{format(new Date(msg.timestamp), 'hh:mm a')}</div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div> 
+            <form onSubmit={sendMessage} className="chat-input">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit">
+                <i className="fa fa-paper-plane"></i>
+              </button>
+            </form>
+            <form onSubmit={sendMessage} className="chat-input">
+      <Grid
+        container
+        direction="column"
+        alignItems="center"
+        style={{ height: "100vh", width: "100%", padding: 5, marginTop: "100px", position: "fixed" }}
+      >
+        <UsernameDialog username={profiledata} setUsername={profiledata} />
+        <Stack                                                 
+          spacing={1}
+          sx={{
+            backgroundColor: "#fff",
+            height: "80vh",
+            width: "90%",
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Grid container item padding={3}>
+            <Grid item>Welcome {username}</Grid>
+          </Grid>
+
+          <Stack ref={scrollRef} direction="column" spacing={3} px={2} sx={{ flex: 1, overflowY: "auto" }}>
+            {chatMessages.map(({ username: sender, content, timestamp }, index) => {
+              const self = sender === username;
+              return (
+                <Grid
+                  key={index}
+                  item
+                  sx={{
+                    alignSelf: self ? "flex-end" : "flex-start",
+                    maxWidth: "50%",
+                  }}
+                >
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {sender}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      backgroundColor: self ? "#90caf9" : "#e0e0e0",
+                      borderRadius: 2,
+                      padding: "5px",
+                    }}
+                    px={1}
+                  >
+                    {content}
+                  </Typography>
+                  <Typography fontSize={11} px={1} textAlign={self ? "right" : "left"}>
+                    {format(new Date(timestamp), "hh:mm a")}
+                  </Typography>
+                </Grid>
+              );
+            })}
+          </Stack>
+
+          <Grid container item padding={3} alignItems="center">
+            <Grid item flex={1}>
+              <TextField
+                autoFocus
+                variant="standard"
+                fullWidth
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                sx={{
+                  border: "1px solid gray",
+                  borderRadius: 1,
+                  paddingLeft: 2,
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={2}>
+            <Button type="submit" variant="contained" fullWidth>
+              <Button type="submit">Send</Button>
+              </Button>
+                    </Grid>
+          </Grid>
+        </Stack>
+      </Grid>
+    </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;

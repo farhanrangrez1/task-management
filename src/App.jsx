@@ -6,6 +6,7 @@ import Register from './Router.jsx/Register';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Contractor from './Router.jsx/Contractor';
+import Super_admin from './Router.jsx/Super_admin';
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
           <Route path='/admin/*' element={<Admin/>}/>
           <Route path='/employee/*' element={<Employee/>}/>
           <Route path='/contractor/*'element={<Contractor/>}/>
+          <Route path='/super_admin/*'element={<Super_admin/>}/>
         </Routes>
       </Router>
       <ToastContainer

@@ -21,10 +21,13 @@ const taskscreate = async(data)=> {
     }
 }
 
-const tasksDelete = async(id)=> {
+const tasksDelete = async(data)=> {
     console.log(data)
     try {
-        const response = await axios.delete(`${API_URL}/tasks/${id}`,data);
+        const response = await axios.delete(
+            `${API_URL}/tasks/${data}`,
+            { ...data,},
+        );
         return response.data; 
     } catch (error) {
         throw new Error(error.message);
