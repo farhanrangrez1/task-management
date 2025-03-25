@@ -173,4 +173,4 @@ export function EmployeeTable() {
   );
 }
 
-// export default EmployeeTable;
+export default EmployeeTable;
