@@ -17,6 +17,9 @@ import Header from "./Header";
 function New_Scheduling() {
   const [customShifts, setCustomShifts] = useState([]);
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
+  const [selectedCustomShiftId, setSelectedCustomShiftId] = useState(null);
+  const [isDeleteShiftModalOpen, setIsDeleteShiftModalOpen] = useState(false);
+
   const [newShift, setNewShift] = useState({
     name: "",
     start: "",
@@ -342,6 +345,20 @@ function New_Scheduling() {
                       >
                         ➕
                       </button>
+
+                      <button
+                        onClick={() => setIsDeleteShiftModalOpen(true)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          fontSize: "20px",
+                          cursor: "pointer",
+                          color: "red",
+                        }}
+                        title="Delete a shift"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
 
@@ -384,7 +401,7 @@ function New_Scheduling() {
               </div>
             )}
 
-            {isShiftModalOpen && (
+            {/* {isShiftModalOpen && (
               <div className="popup">
                 <div className="popup-content">
                   <h4>Add New Shift</h4>
@@ -429,6 +446,158 @@ function New_Scheduling() {
                       Add Shift
                     </button>
                     <button onClick={() => setIsShiftModalOpen(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )} */}
+
+            {isShiftModalOpen && (
+              <div className="popup">
+                <div className="popup-content">
+                  <h4>Add New Shift</h4>
+
+                  <div className="form-group">
+                    <label>Shift Name</label>
+                    <input
+                      type="text"
+                      value={newShift.name}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, name: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Start Time</label>
+                    <input
+                      type="time"
+                      value={newShift.start}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, start: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>End Time</label>
+                    <input
+                      type="time"
+                      value={newShift.end}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, end: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="button-group">
+                    <button
+                      onClick={async () => {
+                        const { name, start, end } = newShift;
+
+                        if (!name || !start || !end) {
+                          alert("Please fill all fields.");
+                          return;
+                        }
+
+                        // Convert to 12-hour format (e.g. 07:00 AM)
+                        const formatTime = (timeStr) => {
+                          const [hour, minute] = timeStr.split(":");
+                          const date = new Date();
+                          date.setHours(hour);
+                          date.setMinutes(minute);
+                          return date.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          });
+                        };
+
+                        const payload = {
+                          shift_type: name,
+                          start_time: formatTime(start),
+                          end_time: formatTime(end),
+                        };
+
+                        try {
+                          const res = await axios.post(
+                            "https://projectmanagement-employe-1.onrender.com/api/shifttime",
+                            payload
+                          );
+                          console.log("Shift saved to backend:", res.data);
+
+                          // Local update for dropdown
+                          setCustomShifts([...customShifts, newShift]);
+                          setNewShift({ name: "", start: "", end: "" });
+                          setIsShiftModalOpen(false);
+                          alert("Shift added successfully ✅");
+                        } catch (error) {
+                          console.error("Error adding shift:", error);
+                          alert("Failed to add shift ❌");
+                        }
+                      }}
+                    >
+                      Add Shift
+                    </button>
+
+                    <button onClick={() => setIsShiftModalOpen(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isDeleteShiftModalOpen && (
+              <div className="popup">
+                <div className="popup-content">
+                  <h4>Delete Shift</h4>
+                  <div className="form-group">
+                    <label>Select Shift to Delete</label>
+                    <select
+                      value={selectedCustomShiftId || ""}
+                      onChange={(e) => setSelectedCustomShiftId(e.target.value)}
+                    >
+                      <option value="">Select a shift</option>
+                      {customShifts.map((shift, index) => (
+                        <option key={index} value={index}>
+                          {shift.name} ({shift.start} - {shift.end})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="button-group">
+                    <button
+                      className="delete-button"
+                      onClick={async () => {
+                        if (selectedCustomShiftId === null) return;
+
+                        const shiftToDelete =
+                          customShifts[selectedCustomShiftId];
+
+                        try {
+                          // Call DELETE API if backend shift has an ID
+                          await axios.delete(
+                            `https://projectmanagement-employe-1.onrender.com/shifts/${shiftToDelete.id}`
+                          );
+
+                          const updated = [...customShifts];
+                          updated.splice(selectedCustomShiftId, 1);
+                          setCustomShifts(updated);
+                          setIsDeleteShiftModalOpen(false);
+                          setSelectedCustomShiftId(null);
+                          alert("Shift deleted successfully ✅");
+                        } catch (error) {
+                          console.error("Error deleting shift:", error);
+                          alert("Failed to delete shift ❌");
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button onClick={() => setIsDeleteShiftModalOpen(false)}>
                       Cancel
                     </button>
                   </div>
