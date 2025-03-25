@@ -8,7 +8,7 @@ import { getEmployees, deleteEmployee, updateEmployeeStatus } from '../features/
 import { useDispatch, useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 
-export function EmployeeTable() {
+ function EmployeeTable() {
   const dispatch = useDispatch();
   const { employees } = useSelector((state) => state.employees);
   const [searchQuery, setSearchQuery] = useState('');
@@ -173,4 +173,4 @@ export function EmployeeTable() {
   );
 }
 
-// export default EmployeeTable;
+export default EmployeeTable;

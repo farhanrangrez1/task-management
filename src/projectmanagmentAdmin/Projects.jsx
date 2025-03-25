@@ -5,43 +5,15 @@ import { Link } from 'react-router-dom';
 import { BsBell } from 'react-icons/bs';
 import Header from './Header';
 import { useSelector, useDispatch } from 'react-redux';
-import { getProjects } from '../features/Project/ProjectSlice';
+import { deleteProject, getProjects } from '../features/Project/ProjectSlice';
+import Swal from 'sweetalert2';
 
 function Projects() {
-  // const [projects, setProjects] = useState([
-  //   {
-  //     id: 1,
-  //     name: 'Website Redesign',
-  //     category: 'Frontend Development',
-  //     address: '123 Tech Street, Silicon Valley',
-  //     teamLead: {
-  //       name: 'Michael Chen',
-  //       avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-  //       clockedIn: true
-  //     },
-  //     teamSize: 8,
-  //     progress: 75,
-  //     deadline: '2024-03-22'
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'Website Redesign',
-  //     category: 'Frontend Development',
-  //     address: '456 Innovation Ave, Tech Park',
-  //     teamLead: {
-  //       name: 'Michael Chen',
-  //       avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-  //       clockedIn: false
-  //     },
-  //     teamSize: 8,
-  //     progress: 75,
-  //     deadline: '2024-03-22'
-  //   }
-  // ]);
 
    const dispatch = useDispatch();
    const { projects  } = useSelector((state) => state?.projects );
    console.log(projects);
+
    useEffect(() => {
     dispatch(getProjects());
   }, [dispatch]);
@@ -71,6 +43,28 @@ function Projects() {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You won’t be able to revert this!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(deleteProject(id));
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Employee has been deleted.',
+          icon: 'success',
+          timer: 2000,
+        });
+      }
+    });
   };
 
   return (
@@ -154,7 +148,7 @@ function Projects() {
       <td>
         <div className="action-buttons">
           <button className="action-btn edit"><BiEdit /></button>
-          <button className="action-btn delete"><BiTrash /></button>
+          <button className="action-btn delete" onClick={() => handleDelete(project?.id)}><BiTrash /></button>
         </div>
       </td>
     </tr>
